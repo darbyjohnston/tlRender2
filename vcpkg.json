@@ -18,6 +18,10 @@
     "libpng",
     "ffmpeg",
     {
+        "name": "nativefiledialog-extended",
+        "platform": "!linux"
+    },
+    {
       "name": "minizip-ng",
       "default-features": false,
       "features": ["zlib"]

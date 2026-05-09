@@ -1,3 +1,6 @@
 [submodule "third_party/vcpkg"]
 	path = third_party/vcpkg
 	url = https://github.com/microsoft/vcpkg.git
+[submodule "third_party/feather-tk"]
+	path = third_party/feather-tk
+	url = https://github.com/grizzlypeak3d/feather-tk.git

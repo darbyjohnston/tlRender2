@@ -1,3 +1,5 @@
+[![CI](https://github.com/darbyjohnston/tlRender2/actions/workflows/ci.yml/badge.svg)](https://github.com/darbyjohnston/tlRender2/actions/workflows/ci.yml)
+
 # tlRender2
 
 A library for rendering timelines.

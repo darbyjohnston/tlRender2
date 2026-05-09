@@ -36,7 +36,6 @@ namespace tl
             _mediaTime();
             _rescale();
             _serialize();
-            _otio();
         }
 
         void TimeTest::_members()
@@ -302,54 +301,6 @@ namespace tl
                 std::stringstream ss;
                 ss << t;
                 FTK_ASSERT(ss.str() == core::to_string(t));
-            }
-        }
-
-        void TimeTest::_otio()
-        {
-            // Time round-trip.
-            {
-                const core::Time t{ 100 };
-                const auto rt = core::timeToOTIO(t, 24.0);
-                const auto t2 = core::timeFromOTIO(rt, 24.0);
-                FTK_ASSERT(t == t2);
-            }
-            // Duration round-trip.
-            {
-                const core::Duration d{ 48 };
-                const auto rt = core::durationToOTIO(d, 24.0);
-                const auto d2 = core::durationFromOTIO(rt, 24.0);
-                FTK_ASSERT(d == d2);
-            }
-            // Time across project rates: 1 second at 24 -> 30 should give 30.
-            {
-                const core::Time t{ 24 };
-                const auto rt = core::timeToOTIO(t, 24.0);
-                const auto t2 = core::timeFromOTIO(rt, 30.0);
-                FTK_ASSERT(t2.frames == 30);
-            }
-            // MediaTime round-trip for integer rates: exact.
-            {
-                const core::MediaTime t{ 100, core::mediaRate24() };
-                const auto rt = core::mediaTimeToOTIO(t);
-                const auto t2 = core::mediaTimeFromOTIO(rt);
-                FTK_ASSERT(t == t2);
-            }
-            // MediaTime round-trip for NTSC rates: special-cased, exact.
-            {
-                const core::MediaTime t{ 1001, core::mediaRate23_976() };
-                const auto rt = core::mediaTimeToOTIO(t);
-                const auto t2 = core::mediaTimeFromOTIO(rt);
-                FTK_ASSERT(t.value == t2.value);
-                FTK_ASSERT(t.rate == t2.rate);
-            }
-            // MediaDuration round-trip.
-            {
-                const core::MediaDuration d{ 48000, { 48000, 1 } };
-                const auto rt = core::mediaDurationToOTIO(d);
-                const auto d2 = core::mediaDurationFromOTIO(rt);
-                FTK_ASSERT(d.value == d2.value);
-                FTK_ASSERT(d.rate == d2.rate);
             }
         }
     }

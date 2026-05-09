@@ -5,9 +5,6 @@
 
 #include <tl/Core/Util.h>
 
-#include <opentimelineio/version.h>
-#include <opentime/rationalTime.h>
-
 #include <iosfwd>
 #include <string>
 
@@ -110,23 +107,6 @@ namespace tl
         TL_API std::ostream& operator << (std::ostream&, const MediaRate&);
         TL_API std::ostream& operator << (std::ostream&, const MediaTime&);
         TL_API std::ostream& operator << (std::ostream&, const MediaDuration&);
-
-        ///@}
-
-        //! \name OpenTimelineIO conversion
-        ///@{
-
-        TL_API Time     timeFromOTIO(const OTIO_NS::RationalTime&, double projectRate);
-        TL_API Duration durationFromOTIO(const OTIO_NS::RationalTime&, double projectRate);
-
-        TL_API OTIO_NS::RationalTime timeToOTIO(Time, double projectRate);
-        TL_API OTIO_NS::RationalTime durationToOTIO(Duration, double projectRate);
-
-        TL_API MediaTime     mediaTimeFromOTIO(const OTIO_NS::RationalTime&);
-        TL_API MediaDuration mediaDurationFromOTIO(const OTIO_NS::RationalTime&);
-
-        TL_API OTIO_NS::RationalTime mediaTimeToOTIO(const MediaTime&);
-        TL_API OTIO_NS::RationalTime mediaDurationToOTIO(const MediaDuration&);
 
         ///@}
     }

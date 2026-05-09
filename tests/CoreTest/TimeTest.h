@@ -30,7 +30,6 @@ namespace tl
             void _mediaTime();
             void _rescale();
             void _serialize();
-            void _otio();
         };
     }
 }

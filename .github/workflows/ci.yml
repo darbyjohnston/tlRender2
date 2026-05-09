@@ -28,6 +28,15 @@ jobs:
         with:
           submodules: recursive
 
+      # Compute the vcpkg submodule SHA so it can be folded into the
+      # cache key.
+      - name: Get vcpkg submodule SHA
+        id: vcpkg-sha
+        shell: bash
+        run: |
+          sha=$(git -C third_party/vcpkg rev-parse HEAD)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
       # Cache vcpkg's installed packages so we don't rebuild FFmpeg
       # from source on every CI run. The key includes the OS, the
       # contents of vcpkg.json (which lists dependencies), and the
@@ -38,8 +47,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/build/vcpkg_installed
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'third_party/vcpkg/.git/HEAD') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}-${{ steps.vcpkg-sha.outputs.sha }}
           restore-keys: |
+            vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}-
             vcpkg-${{ runner.os }}-
 
       # Linux-only: install build prerequisites that vcpkg's ffmpeg

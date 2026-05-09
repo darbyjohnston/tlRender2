@@ -70,13 +70,7 @@ project(
 ################################################################################
 # dependencies
 
-option(TL_ENABLE_FFMPEG "Enable FFmpeg I/O support" ON)
-
 find_package(Threads)
-
-if(TL_ENABLE_FFMPEG)
-    find_package(FFMPEG REQUIRED)
-endif()
 
 set(ftk_INSTALL OFF CACHE BOOL "" FORCE)
 set(ftk_TESTS OFF CACHE BOOL "" FORCE)

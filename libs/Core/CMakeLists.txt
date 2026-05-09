@@ -4,12 +4,10 @@ target_sources(tlCore
     PRIVATE
         include/tl/Core/Audio.h
         include/tl/Core/AudioInline.h
-        include/tl/Core/AudioResample.h
         include/tl/Core/Export.h
         include/tl/Core/Time.h
         include/tl/Core/Util.h
         src/Audio.cpp
-        src/AudioResample.cpp
         src/Time.cpp)
 
 target_include_directories(tlCore
@@ -31,13 +29,6 @@ target_compile_definitions(tlCore PUBLIC
     -DTL_VERSION_PATCH=${TL_VERSION_PATCH}
     -DTL_VERSION_DEV="${TL_VERSION_DEV}"
     -DTL_VERSION_FULL="${TL_VERSION_FULL}")
-
-if(TL_ENABLE_FFMPEG)
-    target_include_directories(tlCore PRIVATE ${FFMPEG_INCLUDE_DIRS})
-    target_link_libraries(tlCore PRIVATE ${FFMPEG_LIBRARIES})
-    target_link_directories(tlCore PRIVATE ${FFMPEG_LIBRARY_DIRS})
-    target_compile_definitions(tlCore PRIVATE TL_HAS_FFMPEG)
-endif()
 
 install(TARGETS tlCore
     EXPORT tlRender2Targets

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright Contributors to the tlRender project.
 
-#include <tl/Core/AudioResample.h>
+#include <tl/IO/AudioResample.h>
 
-#if defined(TL_HAS_FFMPEG)
+#if defined(TL_IO_HAS_FFMPEG)
 extern "C"
 {
 #include <libswresample/swresample.h>
 }
-#endif // TL_HAS_FFMPEG
+#endif // TL_IO_HAS_FFMPEG
 
 namespace tl
 {
@@ -16,7 +16,7 @@ namespace tl
     {
         namespace
         {
-#if defined(TL_HAS_FFMPEG)
+#if defined(TL_IO_HAS_FFMPEG)
             AVSampleFormat fromAudioType(AudioType value)
             {
                 AVSampleFormat out = AV_SAMPLE_FMT_NONE;
@@ -30,16 +30,16 @@ namespace tl
                 }
                 return out;
             }
-#endif // TL_HAS_FFMPEG
+#endif // TL_IO_HAS_FFMPEG
         }
 
         struct AudioResample::Private
         {
             AudioInfo inputInfo;
             AudioInfo outputInfo;
-    #if defined(TL_HAS_FFMPEG)
+    #if defined(TL_IO_HAS_FFMPEG)
             SwrContext* swrContext = nullptr;
-    #endif // TL_HAS_FFMPEG
+    #endif // TL_IO_HAS_FFMPEG
         };
 
         void AudioResample::_init(
@@ -49,7 +49,7 @@ namespace tl
             FTK_P();
             p.inputInfo = inputInfo;
             p.outputInfo = outputInfo;
-    #if defined(TL_HAS_FFMPEG)
+    #if defined(TL_IO_HAS_FFMPEG)
             if (p.inputInfo.isValid() && p.outputInfo.isValid())
             {
                 AVChannelLayout inputChannelLayout;
@@ -73,7 +73,7 @@ namespace tl
                     swr_init(p.swrContext);
                 }
             }
-#endif // TL_HAS_FFMPEG
+#endif // TL_IO_HAS_FFMPEG
         }
 
         AudioResample::AudioResample() :
@@ -83,12 +83,12 @@ namespace tl
         AudioResample::~AudioResample()
         {
             FTK_P();
-#if defined(TL_HAS_FFMPEG)
+#if defined(TL_IO_HAS_FFMPEG)
             if (p.swrContext)
             {
                 swr_free(&p.swrContext);
             }
-#endif // TL_HAS_FFMPEG
+#endif // TL_IO_HAS_FFMPEG
         }
 
         std::shared_ptr<AudioResample> AudioResample::create(
@@ -114,7 +114,7 @@ namespace tl
         {
             FTK_P();
             std::shared_ptr<Audio> out;
-#if defined(TL_HAS_FFMPEG)
+#if defined(TL_IO_HAS_FFMPEG)
             if (p.swrContext && value)
             {
                 const size_t sampleCount = value->getSampleCount();
@@ -134,14 +134,14 @@ namespace tl
                 out = Audio::create(p.outputInfo, swrOutputCount > 0 ? swrOutputCount : 0);
                 memcpy(out->getData(), swrOutputBuffer->getData(), out->getByteCount());
             }
-#endif // TL_HAS_FFMPEG
+#endif // TL_IO_HAS_FFMPEG
             return out;
         }
 
         void AudioResample::flush()
         {
             FTK_P();
-#if defined(TL_HAS_FFMPEG)
+#if defined(TL_IO_HAS_FFMPEG)
             if (p.swrContext)
             {
                 const int drain = swr_get_out_samples(p.swrContext, 0);
@@ -155,7 +155,7 @@ namespace tl
                     nullptr,
                     0);
             }
-#endif // TL_HAS_FFMPEG
+#endif // TL_IO_HAS_FFMPEG
         }
     }
 }

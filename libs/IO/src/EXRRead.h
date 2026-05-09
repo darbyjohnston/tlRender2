@@ -3,14 +3,35 @@
 
 #pragma once
 
+#include <tl/IO/Plugin.h>
+
 namespace tl
 {
     namespace io
     {
-        class ExrRead
+        class EXRRead : public IReadPlugin
         {
+            FTK_NON_COPYABLE(EXRRead);
+
+        protected:
+            void _init(const std::string&);
+
+            EXRRead();
+
         public:
-            ExrRead();
+            TL_API virtual ~EXRRead();
+
+            TL_API ReadInfo getInfo() override;
+            TL_API std::shared_ptr<ftk::Image> getVideo(
+                const core::MediaTime&,
+                const ReadVideoOptions& = ReadVideoOptions()) override;
+            TL_API std::shared_ptr<core::Audio> getAudio(
+                const core::MediaTime&,
+                size_t sampleCount,
+                const ReadAudioOptions& = ReadAudioOptions()) override;
+
+        private:
+            FTK_PRIVATE();
         };
     }
 }

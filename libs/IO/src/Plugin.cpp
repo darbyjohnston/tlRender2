@@ -7,7 +7,12 @@ namespace tl
 {
     namespace io
     {
-        Plugin::Plugin()
+        void IReadPlugin::_init(const std::string& fileName)
+        {
+            _fileName = fileName;
+        }
+
+        IReadPlugin::~IReadPlugin()
         {}
     }
 }

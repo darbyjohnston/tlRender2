@@ -3,14 +3,66 @@
 
 #pragma once
 
+#include <tl/Core/Audio.h>
+#include <tl/Core/Time.h>
+
+#include <ftk/Core/Image.h>
+
 namespace tl
 {
     namespace io
     {
-        class Plugin
+        //! Read information.
+        struct ReadInfo
         {
+            std::vector<ftk::ImageInfo> video;
+            core::MediaTime             videoTime;
+            core::MediaDuration         videoDuration;
+            
+            core::AudioInfo             audio;
+            core::MediaTime             audioTime;
+            core::MediaDuration         audioDuration;
+        };
+
+        //! Read video options.
+        struct ReadVideoOptions
+        {
+            int layer = 0;
+        };
+
+        //! Read audio options.
+        struct ReadAudioOptions
+        {
+            int layer = 0;
+        };
+
+        //! Base class for I/O plugins.
+        class IReadPlugin : public std::enable_shared_from_this<IReadPlugin>
+        {
+        protected:
+            void _init(const std::string&);
+
+            IReadPlugin() = default;
+
         public:
-            Plugin();
+            TL_API virtual ~IReadPlugin() = 0;
+
+            //! Get information.
+            TL_API virtual ReadInfo getInfo() = 0;
+
+            //! Get video frames.
+            TL_API virtual std::shared_ptr<ftk::Image> getVideo(
+                const core::MediaTime&,
+                const ReadVideoOptions& = ReadVideoOptions()) = 0;
+
+            //! Get audio data.
+            TL_API virtual std::shared_ptr<core::Audio> getAudio(
+                const core::MediaTime&,
+                size_t sampleCount,
+                const ReadAudioOptions& = ReadAudioOptions()) = 0;
+
+        protected:
+            std::string _fileName;
         };
     }
 }

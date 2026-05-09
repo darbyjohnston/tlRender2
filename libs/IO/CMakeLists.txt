@@ -1,4 +1,3 @@
-option(TL_ENABLE_FFMPEG "Enable FFmpeg I/O support" ON)
 option(TL_ENABLE_EXR "Enable OpenEXR I/O support" ON)
 option(TL_ENABLE_OIIO "Enable OpenImageIO support" ON)
 
@@ -21,14 +20,13 @@ target_link_libraries(tlIO PUBLIC tlCore PRIVATE Threads::Threads)
 target_compile_features(tlIO PUBLIC cxx_std_17)
 
 if(TL_ENABLE_FFMPEG)
-    find_package(FFMPEG REQUIRED)
     target_sources(tlIO PRIVATE
         src/FFmpegRead.cpp
         src/FFmpegRead.h)
     target_include_directories(tlIO PRIVATE ${FFMPEG_INCLUDE_DIRS})
     target_link_libraries(tlIO PRIVATE ${FFMPEG_LIBRARIES})
     target_link_directories(tlIO PRIVATE ${FFMPEG_LIBRARY_DIRS})
-    target_compile_definitions(tlIO PRIVATE TL_IO_HAS_FFMPEG)
+    target_compile_definitions(tlIO PRIVATE TL_HAS_FFMPEG)
 endif()
 
 if(TL_ENABLE_EXR)

@@ -12,6 +12,8 @@ target_include_directories(tlCore
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+target_link_libraries(tlCore PUBLIC ftk::ftkCore)
+
 target_compile_features(tlCore PUBLIC cxx_std_17)
 
 target_compile_definitions(tlCore PUBLIC

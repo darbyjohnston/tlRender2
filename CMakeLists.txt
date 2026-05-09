@@ -67,7 +67,18 @@ project(
     HOMEPAGE_URL "https://github.com/grizzlypeak3d/tlRender"
     LANGUAGES CXX C)
 
+################################################################################
+# dependencies
+
 find_package(Threads)
+
+set(ftk_INSTALL OFF CACHE BOOL "" FORCE)
+set(ftk_TESTS OFF CACHE BOOL "" FORCE)
+set(ftk_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(third_party/feather-tk EXCLUDE_FROM_ALL)
+if(NOT TARGET ftk::ftkCore)
+    add_library(ftk::ftkCore ALIAS ftkCore)
+endif()
 
 include(GNUInstallDirs)
 

@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Cancel in-progress runs of the same workflow on the same branch
+# when a new commit is pushed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    env:
+      # Tell vcpkg to use GitHub Actions cache for binary caching.
+      # This is what makes subsequent runs fast — built ports are
+      # restored from cache instead of rebuilt.
+      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # vcpkg's GitHub Actions binary cache integration needs these
+      # environment variables. The action below sets them up.
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      # Linux-only: install build prerequisites that vcpkg's ffmpeg
+      # port expects to find on the system. macOS and Windows runners
+      # already have what's needed.
+      - name: Install Linux build prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            nasm \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config
+
+      - name: Configure
+        run: cmake --preset default
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Install
+        run: cmake --install build --prefix ${{ github.workspace }}/install --config Release
+
+      - name: Upload install tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: tlRender2-${{ matrix.os }}
+          path: ${{ github.workspace }}/install
+          retention-days: 7

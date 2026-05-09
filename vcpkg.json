@@ -2,7 +2,11 @@
   "name": "tlrender2",
   "version": "2.0.0",
   "dependencies": [
-    "sdl2",
+    {
+      "name": "sdl2",
+      "default-features": false,
+      "features": ["x11"]
+    }
     "nlohmann-json",
     "freetype",
     "lunasvg",

@@ -1,0 +1,8 @@
+{
+  "name": "tlrender2",
+  "version-string": "2.0.0",
+  "dependencies": [
+    "ffmpeg"
+  ]
+}
+

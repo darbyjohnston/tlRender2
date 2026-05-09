@@ -24,7 +24,7 @@ if(TL_ENABLE_FFMPEG)
     find_package(FFMPEG REQUIRED)
     target_sources(tlIO PRIVATE
         src/FFmpegRead.cpp
-        include/tl/IO/FFmpegRead.h)
+        src/FFmpegRead.h)
     target_include_directories(tlIO PRIVATE ${FFMPEG_INCLUDE_DIRS})
     target_link_libraries(tlIO PRIVATE ${FFMPEG_LIBRARIES})
     target_link_directories(tlIO PRIVATE ${FFMPEG_LIBRARY_DIRS})
@@ -35,7 +35,7 @@ if(TL_ENABLE_EXR)
     find_package(OpenEXR CONFIG REQUIRED)
     target_sources(tlIO PRIVATE
         src/EXRRead.cpp
-        include/tl/IO/EXRRead.h)
+        src/EXRRead.h)
     target_link_libraries(tlIO PRIVATE OpenEXR::OpenEXR)
     target_compile_definitions(tlIO PRIVATE TL_IO_HAS_EXR)
 endif()
@@ -44,7 +44,7 @@ if(TL_ENABLE_OIIO)
     find_package(OpenImageIO CONFIG REQUIRED)
     target_sources(tlIO PRIVATE
         src/OIIORead.cpp
-        include/tl/IO/OIIORead.h)
+        src/OIIORead.h)
     target_link_libraries(tlIO PRIVATE OpenImageIO::OpenImageIO)
     target_compile_definitions(tlIO PRIVATE TL_IO_HAS_OIIO)
 endif()

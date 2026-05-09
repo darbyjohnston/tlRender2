@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright Contributors to the tlRender project.
 
-#include <tl/IO/FFmpegRead.h>
+#include "FFmpegRead.h"
 
 #include <tl/Core/Audio.h>
 

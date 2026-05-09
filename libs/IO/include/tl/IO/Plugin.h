@@ -13,7 +13,7 @@ namespace tl
     namespace io
     {
         //! Read information.
-        struct ReadInfo
+        struct TL_API_TYPE ReadInfo
         {
             std::vector<ftk::ImageInfo> video;
             core::MediaTime             videoTime;
@@ -25,19 +25,19 @@ namespace tl
         };
 
         //! Read video options.
-        struct ReadVideoOptions
+        struct TL_API_TYPE ReadVideoOptions
         {
             int layer = 0;
         };
 
         //! Read audio options.
-        struct ReadAudioOptions
+        struct TL_API_TYPE ReadAudioOptions
         {
             int layer = 0;
         };
 
         //! Base class for I/O plugins.
-        class IReadPlugin : public std::enable_shared_from_this<IReadPlugin>
+        class TL_API_TYPE IReadPlugin : public std::enable_shared_from_this<IReadPlugin>
         {
         protected:
             void _init(const std::string&);

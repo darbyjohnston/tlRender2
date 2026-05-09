@@ -13,43 +13,43 @@ namespace tl
     namespace core
     {
         //! Time.
-        struct Time
+        struct TL_API_TYPE Time
         {
             int64_t frames = 0;
         };
 
         //! Duration.
-        struct Duration
+        struct TL_API_TYPE Duration
         {
             int64_t frames = 0;
         };
         
         //! Media rate.
-        struct MediaRate
+        struct TL_API_TYPE MediaRate
         {
             int num = 1;
             int den = 24;
         };
 
         //! Media time.
-        struct MediaTime
+        struct TL_API_TYPE MediaTime
         {
             int64_t   value = 0;
             MediaRate rate;
         };
 
         //! Media duration.
-        struct MediaDuration
+        struct TL_API_TYPE MediaDuration
         {
             int64_t   value = 0;
             MediaRate rate;
         };
 
-        Time operator + (Time t, Duration d);
-        Duration operator - (Time a, Time b);
+        TL_API Time operator + (Time t, Duration d);
+        TL_API Duration operator - (Time a, Time b);
 
-        Time timeFromOTIO(const OTIO_NS::RationalTime&, double projectRate);
+        TL_API Time timeFromOTIO(const OTIO_NS::RationalTime&, double projectRate);
 
-        OTIO_NS::RationalTime timeToOTIO(Time, double projectRate);
+        TL_API OTIO_NS::RationalTime timeToOTIO(Time, double projectRate);
     }
 }

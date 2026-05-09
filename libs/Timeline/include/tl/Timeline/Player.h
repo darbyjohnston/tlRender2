@@ -3,14 +3,36 @@
 
 #pragma once
 
+#include <tl/Timeline/Timeline.h>
+
 namespace tl
 {
     namespace timeline
     {
-        class Player
+        //! Timeline player.
+        class TL_API_TYPE Player
         {
-        public:
+            FTK_NON_COPYABLE(Player);
+
+        protected:
+            void _init(const std::shared_ptr<Timeline>&);
+
             Player();
+
+        public:
+            TL_API ~Player();
+
+            //! Create a new timeline player.
+            TL_API static std::shared_ptr<Player> create(const std::shared_ptr<Timeline>&);
+            
+            //! Get the current time.
+            TL_API const core::Time& getTime() const;
+
+            //! Observe the current time.
+            TL_API std::shared_ptr<ftk::IObservable<core::Time> > observeTime() const;
+
+        private:
+            FTK_PRIVATE();
         };
     }
 }

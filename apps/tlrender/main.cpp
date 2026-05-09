@@ -1,7 +1,7 @@
-#include <tl/Timeline/Player.h>
+#include <tl/Timeline/Timeline.h>
 
 int main(int argc, char** argv)
 {
-    tl::timeline::Player player;
+    auto timeline = tl::timeline::Timeline::create();
     return 0;
 }

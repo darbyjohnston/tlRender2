@@ -3,14 +3,16 @@
 
 #pragma once
 
+#include <tl/Core/Util.h>
+
 namespace tl
 {
     namespace ui
     {
-        class TimelineWidget
+        class TL_API_TYPE TimelineWidget
         {
         public:
-            TimelineWidget();
+            TL_API TimelineWidget();
         };
     }
 }

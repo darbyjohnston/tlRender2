@@ -3,7 +3,11 @@ add_library(tlTimeline)
 target_sources(tlTimeline
     PRIVATE
         include/tl/Timeline/Player.h
-        src/Player.cpp)
+        include/tl/Timeline/Timeline.h
+        include/tl/Timeline/VideoGraph.h
+        src/Player.cpp
+        src/Timeline.cpp
+        src/VideoGraph.cpp)
 
 target_include_directories(tlTimeline
     PUBLIC

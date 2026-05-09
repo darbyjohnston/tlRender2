@@ -15,7 +15,6 @@ target_include_directories(tlCore
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/feather-tk/lib>
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/otio/src>
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)

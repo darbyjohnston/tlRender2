@@ -72,6 +72,7 @@ project(
 
 find_package(Threads)
 
+set(ftk_nfd OFF CACHE BOOL "" FORCE)
 set(ftk_INSTALL OFF CACHE BOOL "" FORCE)
 set(ftk_TESTS OFF CACHE BOOL "" FORCE)
 set(ftk_EXAMPLES OFF CACHE BOOL "" FORCE)

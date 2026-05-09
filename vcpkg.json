@@ -5,7 +5,12 @@
     {
       "name": "sdl2",
       "default-features": false,
-      "features": ["x11"]
+      "features": [
+        {
+          "name": "x11",
+          "platform": "!windows"
+        }
+      ]
     },
     "nlohmann-json",
     "freetype",

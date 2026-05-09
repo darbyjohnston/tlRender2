@@ -12,7 +12,9 @@ extern "C"
 
 namespace tl
 {
-    namespace core
+    using namespace core;
+
+    namespace io
     {
         namespace
         {

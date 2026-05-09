@@ -7,7 +7,7 @@
 
 namespace tl
 {
-    namespace core
+    namespace io
     {
         //! Resample audio data.
         class TL_API_TYPE AudioResample
@@ -16,8 +16,8 @@ namespace tl
 
         protected:
             void _init(
-                const AudioInfo& input,
-                const AudioInfo& output);
+                const core::AudioInfo& input,
+                const core::AudioInfo& output);
 
             AudioResample();
 
@@ -26,17 +26,17 @@ namespace tl
 
             //! Create a new resampler.
             static std::shared_ptr<AudioResample> create(
-                const AudioInfo& input,
-                const AudioInfo& ouput);
+                const core::AudioInfo& input,
+                const core::AudioInfo& ouput);
 
             //! Get the input audio information.
-            const AudioInfo& getInputInfo() const;
+            const core::AudioInfo& getInputInfo() const;
 
             //! Get the output audio information.
-            const AudioInfo& getOutputInfo() const;
+            const core::AudioInfo& getOutputInfo() const;
 
             //! Resample audio data.
-            std::shared_ptr<Audio> process(const std::shared_ptr<Audio>&);
+            std::shared_ptr<core::Audio> process(const std::shared_ptr<core::Audio>&);
 
             //! Flush any remaining data.
             void flush();

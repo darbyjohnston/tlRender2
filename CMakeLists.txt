@@ -67,6 +67,8 @@ project(
     HOMEPAGE_URL "https://github.com/grizzlypeak3d/tlRender"
     LANGUAGES CXX C)
 
+option(TL_BUILD_TESTS "Build the tlRender2 tests" OFF)
+
 ################################################################################
 # dependencies
 
@@ -101,6 +103,14 @@ add_subdirectory(libs/UI)
 
 add_subdirectory(apps/tlrender)
 add_subdirectory(apps/tlplayer)
+
+################################################################################
+# tests
+
+if(TL_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 ################################################################################
 # install / package config

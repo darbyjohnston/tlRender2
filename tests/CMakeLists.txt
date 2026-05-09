@@ -1,0 +1,5 @@
+add_subdirectory(CoreTest)
+if(TL_ENABLE_FFMPEG)
+    add_subdirectory(IOTest)
+endif()
+add_subdirectory(tl-test)

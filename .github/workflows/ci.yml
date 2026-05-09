@@ -72,10 +72,13 @@ jobs:
             xvfb
 
       - name: Configure
-        run: cmake --preset default
+        run: cmake --preset default -DTL_BUILD_TESTS=ON
 
       - name: Build
         run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure -C Release
 
       - name: Install
         run: cmake --install build --prefix ${{ github.workspace }}/install --config Release

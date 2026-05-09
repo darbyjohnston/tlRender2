@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BSD-3-Clause
-// Copyright Contributors to the tlRender2 project.
+// Copyright Contributors to the tlRender project.
 
 #pragma once
 
 namespace tl
 {
-    namespace timeline
+    namespace io
     {
-        class Player
+        class ExrRead
         {
         public:
-            Player();
+            ExrRead();
         };
     }
 }

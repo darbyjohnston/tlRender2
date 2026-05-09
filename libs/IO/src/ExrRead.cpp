@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright Contributors to the tlRender project.
 
-#pragma once
+#include <tl/IO/ExrRead.h>
 
 namespace tl
 {
-    namespace core
+    namespace io
     {
-        class Audio
-        {
-        public:
-            Audio();
-        };
+        ExrRead::ExrRead()
+        {}
     }
 }

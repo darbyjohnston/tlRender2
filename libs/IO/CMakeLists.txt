@@ -1,4 +1,6 @@
 option(TL_ENABLE_FFMPEG "Enable FFmpeg I/O support" ON)
+option(TL_ENABLE_EXR "Enable OpenEXR I/O support" ON)
+option(TL_ENABLE_OIIO "Enable OpenImageIO support" ON)
 
 add_library(tlIO)
 
@@ -29,6 +31,24 @@ if(TL_ENABLE_FFMPEG)
     target_compile_definitions(tlIO PRIVATE TL_IO_HAS_FFMPEG)
 endif()
 
+if(TL_ENABLE_EXR)
+    find_package(OpenEXR CONFIG REQUIRED)
+    target_sources(tlIO PRIVATE
+        src/EXRRead.cpp
+        include/tl/IO/EXRRead.h)
+    target_link_libraries(tlIO PRIVATE OpenEXR::OpenEXR)
+    target_compile_definitions(tlIO PRIVATE TL_IO_HAS_EXR)
+endif()
+
+if(TL_ENABLE_OIIO)
+    find_package(OpenImageIO CONFIG REQUIRED)
+    target_sources(tlIO PRIVATE
+        src/OIIORead.cpp
+        include/tl/IO/OIIORead.h)
+    target_link_libraries(tlIO PRIVATE OpenImageIO::OpenImageIO)
+    target_compile_definitions(tlIO PRIVATE TL_IO_HAS_OIIO)
+endif()
+
 install(TARGETS tlIO
     EXPORT tlRender2Targets
     LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -41,5 +61,3 @@ install(DIRECTORY include/
     FILES_MATCHING
         PATTERN "*.h"
         PATTERN "._*" EXCLUDE)
-
-

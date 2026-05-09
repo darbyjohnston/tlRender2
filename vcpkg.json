@@ -2,7 +2,18 @@
   "name": "tlrender2",
   "version-string": "2.0.0",
   "dependencies": [
-    "ffmpeg"
+    "ffmpeg",
+    {
+      "name": "openexr",
+      "default-features": false
+    },
+    {
+      "name": "openimageio",
+      "default-features": false
+    },
+    {
+      "name": "opencolorio",
+      "default-features": false
+    }
   ]
 }
-

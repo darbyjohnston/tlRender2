@@ -4,6 +4,11 @@
   "dependencies": [
     "ffmpeg",
     {
+      "name": "minizip-ng",
+      "default-features": false,
+      "features": ["zlib"]
+    },
+    {
       "name": "openexr",
       "default-features": false
     },

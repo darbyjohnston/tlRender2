@@ -3,6 +3,8 @@
 
 #include <tl/IO/FFmpegRead.h>
 
+#include <tl/Core/Audio.h>
+
 namespace tl
 {
     namespace io

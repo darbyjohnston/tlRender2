@@ -12,7 +12,7 @@ target_include_directories(tlTimeline
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-target_link_libraries(tlTimeline PUBLIC tlIO)
+target_link_libraries(tlTimeline PUBLIC tlIO OTIO::opentimelineio)
 
 target_compile_features(tlTimeline PUBLIC cxx_std_17)
 

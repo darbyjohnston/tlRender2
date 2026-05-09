@@ -4,3 +4,6 @@
 [submodule "third_party/feather-tk"]
 	path = third_party/feather-tk
 	url = https://github.com/grizzlypeak3d/feather-tk.git
+[submodule "third_party/otio"]
+	path = third_party/otio
+	url = https://github.com/AcademySoftwareFoundation/OpenTimelineIO.git

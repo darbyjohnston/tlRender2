@@ -81,6 +81,10 @@ if(NOT TARGET ftk::ftkCore)
     add_library(ftk::ftkCore ALIAS ftkCore)
 endif()
 
+set(OTIO_SHARED_LIBS ${BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
+set(OTIO_FIND_IMATH ON CACHE BOOL "" FORCE)
+add_subdirectory(third_party/otio EXCLUDE_FROM_ALL)
+
 include(GNUInstallDirs)
 
 ################################################################################

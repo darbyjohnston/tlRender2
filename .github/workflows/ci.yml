@@ -22,26 +22,25 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
-    env:
-      # Tell vcpkg to use GitHub Actions cache for binary caching.
-      # This is what makes subsequent runs fast — built ports are
-      # restored from cache instead of rebuilt.
-      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-
     steps:
       - name: Checkout (with submodules)
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      # vcpkg's GitHub Actions binary cache integration needs these
-      # environment variables. The action below sets them up.
-      - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v7
+      # Cache vcpkg's installed packages so we don't rebuild FFmpeg
+      # from source on every CI run. The key includes the OS, the
+      # contents of vcpkg.json (which lists dependencies), and the
+      # vcpkg submodule SHA (which pins port versions). Any change
+      # to dependencies or vcpkg itself invalidates the cache and
+      # forces a rebuild.
+      - name: Cache vcpkg installed packages
+        uses: actions/cache@v4
         with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+          path: ${{ github.workspace }}/build/vcpkg_installed
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'third_party/vcpkg/.git/HEAD') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
 
       # Linux-only: install build prerequisites that vcpkg's ffmpeg
       # port expects to find on the system. macOS and Windows runners

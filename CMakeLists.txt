@@ -5,6 +5,53 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
 
+################################################################################
+# vcpkg
+
+# Initialize the vcpkg submodule if it hasn't been already.
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/third_party/vcpkg/.git")
+    find_package(Git QUIET)
+    if(Git_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
+        message(STATUS "Initializing vcpkg submodule...")
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            RESULT_VARIABLE git_submod_result)
+        if(NOT git_submod_result EQUAL 0)
+            message(FATAL_ERROR
+                "git submodule update failed. Run manually: "
+                "git submodule update --init --recursive")
+        endif()
+    else()
+        message(FATAL_ERROR
+            "vcpkg submodule not found. Run: "
+            "git submodule update --init --recursive")
+    endif()
+endif()
+
+# Bootstrap vcpkg if its binary doesn't exist yet.
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/third_party/vcpkg/vcpkg" AND
+   NOT EXISTS "${CMAKE_SOURCE_DIR}/third_party/vcpkg/vcpkg.exe")
+    message(STATUS "Bootstrapping vcpkg...")
+    if(WIN32)
+        execute_process(
+            COMMAND "${CMAKE_SOURCE_DIR}/third_party/vcpkg/bootstrap-vcpkg.bat" -disableMetrics
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/third_party/vcpkg"
+            RESULT_VARIABLE bootstrap_result)
+    else()
+        execute_process(
+            COMMAND "${CMAKE_SOURCE_DIR}/third_party/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/third_party/vcpkg"
+            RESULT_VARIABLE bootstrap_result)
+    endif()
+    if(NOT bootstrap_result EQUAL 0)
+        message(FATAL_ERROR "vcpkg bootstrap failed")
+    endif()
+endif()
+
+################################################################################
+# project
+
 set(TL_VERSION_MAJOR "2")
 set(TL_VERSION_MINOR "0")
 set(TL_VERSION_PATCH "0")
@@ -24,6 +71,9 @@ find_package(Threads)
 
 include(GNUInstallDirs)
 
+################################################################################
+# source
+
 add_subdirectory(libs/Core)
 add_subdirectory(libs/IO)
 add_subdirectory(libs/Timeline)
@@ -31,6 +81,9 @@ add_subdirectory(libs/UI)
 
 add_subdirectory(apps/tlrender)
 add_subdirectory(apps/tlplayer)
+
+################################################################################
+# install / package config
 
 include(CMakePackageConfigHelpers)
 set(TL_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/tlRender2)

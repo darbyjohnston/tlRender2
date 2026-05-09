@@ -6,6 +6,7 @@ target_sources(tlCore
         include/tl/Core/AudioInline.h
         include/tl/Core/Export.h
         include/tl/Core/Time.h
+        include/tl/Core/TimeInline.h
         include/tl/Core/Util.h
         src/Audio.cpp
         src/Time.cpp)

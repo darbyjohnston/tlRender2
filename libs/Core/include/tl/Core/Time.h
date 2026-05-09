@@ -8,48 +8,128 @@
 #include <opentimelineio/version.h>
 #include <opentime/rationalTime.h>
 
+#include <iosfwd>
+#include <string>
+
 namespace tl
 {
     namespace core
     {
-        //! Time.
+        //! Time, in project frames.
         struct TL_API_TYPE Time
         {
             int64_t frames = 0;
         };
 
-        //! Duration.
+        //! Duration, in project frames.
         struct TL_API_TYPE Duration
         {
             int64_t frames = 0;
         };
-        
-        //! Media rate.
+
+        //! Media rate as a rational number (num/den frames per second).
         struct TL_API_TYPE MediaRate
         {
             int num = 1;
             int den = 24;
+
+            //! Get the rate as a double (num / den).
+            double toDouble() const;
+
+            //! Is the rate valid (positive numerator and denominator)?
+            bool isValid() const;
+
+            bool operator == (const MediaRate&) const;
+            bool operator != (const MediaRate&) const;
         };
 
-        //! Media time.
+        //! Common media rates.
+        TL_API MediaRate mediaRate24();
+        TL_API MediaRate mediaRate23_976();
+        TL_API MediaRate mediaRate25();
+        TL_API MediaRate mediaRate30();
+        TL_API MediaRate mediaRate29_97();
+        TL_API MediaRate mediaRate48();
+        TL_API MediaRate mediaRate50();
+        TL_API MediaRate mediaRate60();
+        TL_API MediaRate mediaRate59_94();
+
+        //! Media time, in samples at a given rate.
         struct TL_API_TYPE MediaTime
         {
             int64_t   value = 0;
             MediaRate rate;
+
+            //! Get the time in seconds.
+            double toSeconds() const;
         };
 
-        //! Media duration.
+        //! Media duration, in samples at a given rate.
         struct TL_API_TYPE MediaDuration
         {
             int64_t   value = 0;
             MediaRate rate;
+
+            //! Get the duration in seconds.
+            double toSeconds() const;
         };
 
-        TL_API Time operator + (Time t, Duration d);
-        TL_API Duration operator - (Time a, Time b);
+        // Inline arithmetic and comparison operators on Time and Duration
+        // are defined in TimeInline.h.
 
-        TL_API Time timeFromOTIO(const OTIO_NS::RationalTime&, double projectRate);
+        //! \name MediaTime / MediaDuration operations
+        //!
+        //! Comparison requires matching rates; for cross-rate work, use
+        //! the rescale helpers first.
+        ///@{
+
+        TL_API bool operator == (const MediaTime&, const MediaTime&);
+        TL_API bool operator != (const MediaTime&, const MediaTime&);
+        TL_API bool operator == (const MediaDuration&, const MediaDuration&);
+        TL_API bool operator != (const MediaDuration&, const MediaDuration&);
+
+        //! Rescale a media time to a different rate.
+        TL_API MediaTime rescale(const MediaTime&, const MediaRate&);
+
+        //! Rescale a media duration to a different rate.
+        TL_API MediaDuration rescale(const MediaDuration&, const MediaRate&);
+
+        ///@}
+
+        //! \name String conversion
+        ///@{
+
+        TL_API std::string to_string(Time);
+        TL_API std::string to_string(Duration);
+        TL_API std::string to_string(const MediaRate&);
+        TL_API std::string to_string(const MediaTime&);
+        TL_API std::string to_string(const MediaDuration&);
+
+        TL_API std::ostream& operator << (std::ostream&, Time);
+        TL_API std::ostream& operator << (std::ostream&, Duration);
+        TL_API std::ostream& operator << (std::ostream&, const MediaRate&);
+        TL_API std::ostream& operator << (std::ostream&, const MediaTime&);
+        TL_API std::ostream& operator << (std::ostream&, const MediaDuration&);
+
+        ///@}
+
+        //! \name OpenTimelineIO conversion
+        ///@{
+
+        TL_API Time     timeFromOTIO(const OTIO_NS::RationalTime&, double projectRate);
+        TL_API Duration durationFromOTIO(const OTIO_NS::RationalTime&, double projectRate);
 
         TL_API OTIO_NS::RationalTime timeToOTIO(Time, double projectRate);
+        TL_API OTIO_NS::RationalTime durationToOTIO(Duration, double projectRate);
+
+        TL_API MediaTime     mediaTimeFromOTIO(const OTIO_NS::RationalTime&);
+        TL_API MediaDuration mediaDurationFromOTIO(const OTIO_NS::RationalTime&);
+
+        TL_API OTIO_NS::RationalTime mediaTimeToOTIO(const MediaTime&);
+        TL_API OTIO_NS::RationalTime mediaDurationToOTIO(const MediaDuration&);
+
+        ///@}
     }
 }
+
+#include <tl/Core/TimeInline.h>

@@ -64,7 +64,12 @@ jobs:
             autoconf \
             automake \
             libtool \
-            pkg-config
+            pkg-config \
+            xorg-dev \
+            libglu1-mesa-dev \
+            mesa-common-dev \
+            mesa-utils \
+            xvfb
 
       - name: Configure
         run: cmake --preset default

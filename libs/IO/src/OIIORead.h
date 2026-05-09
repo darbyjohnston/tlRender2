@@ -19,13 +19,13 @@ namespace tl
             OIIORead();
 
         public:
-            TL_API virtual ~OIIORead();
+            virtual ~OIIORead();
 
-            TL_API ReadInfo getInfo() override;
-            TL_API std::shared_ptr<ftk::Image> getVideo(
+            ReadInfo getInfo() override;
+            std::shared_ptr<ftk::Image> getVideo(
                 const core::MediaTime&,
                 const ReadVideoOptions& = ReadVideoOptions()) override;
-            TL_API std::shared_ptr<core::Audio> getAudio(
+            std::shared_ptr<core::Audio> getAudio(
                 const core::MediaTime&,
                 size_t sampleCount,
                 const ReadAudioOptions& = ReadAudioOptions()) override;

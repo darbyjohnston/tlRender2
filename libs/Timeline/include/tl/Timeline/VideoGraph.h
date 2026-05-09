@@ -16,9 +16,9 @@ namespace tl
     {
         struct TL_API_TYPE IVideoNode : public std::enable_shared_from_this<IVideoNode>
         {
-            TL_API IVideoNode(const std::string& type);
+            IVideoNode(const std::string& type);
 
-            TL_API virtual ~IVideoNode() = 0;
+            virtual ~IVideoNode() = 0;
 
             std::string type;
         };

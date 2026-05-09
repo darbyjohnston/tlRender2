@@ -24,31 +24,31 @@ namespace tl
             Timeline();
 
         public:
-            TL_API ~Timeline();
+            ~Timeline();
 
             //! Create an empty timeline.
-            TL_API static std::shared_ptr<Timeline> create();
+            static std::shared_ptr<Timeline> create();
 
             //! Create a new timeline from an .otio, .otioz, or .otiod file.
-            TL_API static std::shared_ptr<Timeline> create(const std::string&);
+            static std::shared_ptr<Timeline> create(const std::string&);
             
             //! Get the timeline start time.
-            TL_API const core::Time& getStartTime() const;
+            const core::Time& getStartTime() const;
 
             //! Observe the timeline start time.
-            TL_API std::shared_ptr<ftk::IObservable<core::Time> > observeStartTime() const;
+            std::shared_ptr<ftk::IObservable<core::Time> > observeStartTime() const;
 
             //! Get the timeline duration.
-            TL_API const core::Duration& getDuration() const;
+            const core::Duration& getDuration() const;
 
             //! Observe the timeline duration.
-            TL_API std::shared_ptr<ftk::IObservable<core::Duration> > observeDuration() const;
+            std::shared_ptr<ftk::IObservable<core::Duration> > observeDuration() const;
 
             //! Get video for the given time.
-            TL_API std::shared_ptr<IVideoNode> getVideo(const core::Time&);
+            std::shared_ptr<IVideoNode> getVideo(const core::Time&);
 
             //! Get audio for the given seconds.
-            TL_API std::future<std::shared_ptr<core::Audio> > getAudio(int64_t seconds);
+            std::future<std::shared_ptr<core::Audio> > getAudio(int64_t seconds);
 
         private:
             FTK_PRIVATE();

@@ -20,16 +20,16 @@ namespace tl
             Player();
 
         public:
-            TL_API ~Player();
+            ~Player();
 
             //! Create a new timeline player.
-            TL_API static std::shared_ptr<Player> create(const std::shared_ptr<Timeline>&);
+            static std::shared_ptr<Player> create(const std::shared_ptr<Timeline>&);
             
             //! Get the current time.
-            TL_API const core::Time& getTime() const;
+            const core::Time& getTime() const;
 
             //! Observe the current time.
-            TL_API std::shared_ptr<ftk::IObservable<core::Time> > observeTime() const;
+            std::shared_ptr<ftk::IObservable<core::Time> > observeTime() const;
 
         private:
             FTK_PRIVATE();

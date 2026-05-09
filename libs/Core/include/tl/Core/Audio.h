@@ -51,7 +51,7 @@ namespace tl
         class TL_API_TYPE AudioInfo
         {
         public:
-            TL_API AudioInfo();
+            AudioInfo();
             TL_API AudioInfo(
                 int       channelCount,
                 AudioType type,
@@ -84,48 +84,48 @@ namespace tl
             Audio(const AudioInfo&, size_t sampleCount);
 
         public:
-            TL_API ~Audio();
+            ~Audio();
 
             //! Create new audio.
-            TL_API static std::shared_ptr<Audio> create(
+            static std::shared_ptr<Audio> create(
                 const AudioInfo& info,
                 size_t           sampleCount);
 
             //! Get the audio information.
-            TL_API const AudioInfo& getInfo() const;
+            const AudioInfo& getInfo() const;
 
             //! Get the audio channel count.
-            TL_API int getChannelCount() const;
+            int getChannelCount() const;
 
             //! Get the audio data type.
-            TL_API AudioType getType() const;
+            AudioType getType() const;
 
             //! Get the audio sample rate.
-            TL_API int getSampleRate() const;
+            int getSampleRate() const;
 
             //! Get the audio sample count.
-            TL_API size_t getSampleCount() const;
+            size_t getSampleCount() const;
 
             //! Is the audio valid?
-            TL_API bool isValid() const;
+            bool isValid() const;
 
             //! Get the audio data byte count.
-            TL_API size_t getByteCount() const;
+            size_t getByteCount() const;
 
             //! Get the audio data.
-            TL_API uint8_t* getData();
+            uint8_t* getData();
 
             //! Get the audio data.
-            TL_API const uint8_t* getData() const;
+            const uint8_t* getData() const;
 
             //! Zero the audio data.
-            TL_API void zero();
+            void zero();
 
             //! Get the number of objects currenty instantiated.
-            TL_API static size_t getObjectCount();
+            static size_t getObjectCount();
 
             //! Get the total number of bytes currently used.
-            TL_API static size_t getTotalByteCount();
+            static size_t getTotalByteCount();
 
         private:
             AudioInfo _info;

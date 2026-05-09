@@ -22,24 +22,24 @@ namespace tl
             AudioResample();
 
         public:
-            TL_API ~AudioResample();
+            ~AudioResample();
 
             //! Create a new resampler.
-            TL_API static std::shared_ptr<AudioResample> create(
+            static std::shared_ptr<AudioResample> create(
                 const AudioInfo& input,
                 const AudioInfo& ouput);
 
             //! Get the input audio information.
-            TL_API const AudioInfo& getInputInfo() const;
+            const AudioInfo& getInputInfo() const;
 
             //! Get the output audio information.
-            TL_API const AudioInfo& getOutputInfo() const;
+            const AudioInfo& getOutputInfo() const;
 
             //! Resample audio data.
-            TL_API std::shared_ptr<Audio> process(const std::shared_ptr<Audio>&);
+            std::shared_ptr<Audio> process(const std::shared_ptr<Audio>&);
 
             //! Flush any remaining data.
-            TL_API void flush();
+            void flush();
 
         private:
             FTK_PRIVATE();

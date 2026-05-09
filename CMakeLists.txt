@@ -90,6 +90,11 @@ set(OTIO_SHARED_LIBS ${BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
 set(OTIO_FIND_IMATH ON CACHE BOOL "" FORCE)
 add_subdirectory(third_party/otio EXCLUDE_FROM_ALL)
 
+################################################################################
+# configuration
+
+add_compile_definitions(TL_STATIC)
+
 include(GNUInstallDirs)
 
 ################################################################################

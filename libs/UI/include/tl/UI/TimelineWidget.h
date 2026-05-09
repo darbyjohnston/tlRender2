@@ -12,7 +12,7 @@ namespace tl
         class TL_API_TYPE TimelineWidget
         {
         public:
-            TL_API TimelineWidget();
+            TimelineWidget();
         };
     }
 }

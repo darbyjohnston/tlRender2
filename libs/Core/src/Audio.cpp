@@ -9,6 +9,7 @@
 
 #include <array>
 #include <atomic>
+#include <iostream>
 #include <sstream>
 
 namespace tl
@@ -52,7 +53,9 @@ namespace tl
                 AudioType::None,
                 AudioType::None
             };
-            return value < data.size() ? data[value] : AudioType::None;
+            return value >= 0 && value < data.size() ?
+                data[value] :
+                AudioType::None;
         }
 
         AudioType getFloatAudioType(int value)
@@ -69,7 +72,9 @@ namespace tl
                 AudioType::None,
                 AudioType::F64
             };
-            return value < data.size() ? data[value] : AudioType::None;
+            return value >= 0 && value < data.size() ?
+                data[value] :
+                AudioType::None;
         }
 
         AudioInfo::AudioInfo()
@@ -357,7 +362,8 @@ namespace tl
                 T* outP = reinterpret_cast<T*>(out);
                 for (size_t i = 0; i < outSampleCount; ++i)
                 {
-                    const size_t j = i / static_cast<double>(outSampleCount - 1) *
+                    const size_t j =
+                        (outSampleCount > 1 ? (i / static_cast<double>(outSampleCount - 1)) : 0) *
                         (inSampleCount - 1);
                     for (int c = 0; c < channelCount; ++c)
                     {

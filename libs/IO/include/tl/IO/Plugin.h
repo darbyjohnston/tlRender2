@@ -45,18 +45,18 @@ namespace tl
             IReadPlugin() = default;
 
         public:
-            TL_API virtual ~IReadPlugin() = 0;
+            virtual ~IReadPlugin() = 0;
 
             //! Get information.
-            TL_API virtual ReadInfo getInfo() = 0;
+            virtual ReadInfo getInfo() = 0;
 
             //! Get video frames.
-            TL_API virtual std::shared_ptr<ftk::Image> getVideo(
+            virtual std::shared_ptr<ftk::Image> getVideo(
                 const core::MediaTime&,
                 const ReadVideoOptions& = ReadVideoOptions()) = 0;
 
             //! Get audio data.
-            TL_API virtual std::shared_ptr<core::Audio> getAudio(
+            virtual std::shared_ptr<core::Audio> getAudio(
                 const core::MediaTime&,
                 size_t sampleCount,
                 const ReadAudioOptions& = ReadAudioOptions()) = 0;

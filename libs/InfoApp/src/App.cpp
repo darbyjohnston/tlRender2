@@ -60,7 +60,6 @@ namespace tl
                     {
                         path = ftk::expandSeq(path);
                     }
-                    _print(path.get() + ":");
                     try
                     {
                         auto read = readSystem->read(path);
@@ -69,12 +68,38 @@ namespace tl
                             throw std::runtime_error("Unknown file: " + input);
                         }
                         const auto info = read->getInfo();
-                        for (const auto& video : info.video)
+                        
+                        _print(path.get() + ":");
+                        for (size_t i = 0; i < info.video.size(); ++i)
                         {
-                            _print("  video:");
+                            const auto& video = info.video[i];
+                            _print(ftk::Format("  video {0}:").arg(i));
                             _print(ftk::Format("    size: {0}x{1}").
                                 arg(video.size.w).
                                 arg(video.size.h));
+                        }
+                        if (!info.video.empty())
+                        {
+                            if (info.videoStart)
+                                _print(ftk::Format("  video start: {0}").
+                                    arg(core::to_string(*info.videoStart)));
+                            _print(ftk::Format("  video duration: {0}").
+                                arg(core::to_string(info.videoDuration)));
+                        }
+                        for (size_t i = 0; i < info.audio.size(); ++i)
+                        {
+                            const auto& audio = info.audio[i];
+                            _print(ftk::Format("  audio {0}:").arg(i));
+                            _print(ftk::Format("    channels: {0}").
+                                arg(audio.channelCount));
+                        }
+                        if (!info.audio.empty())
+                        {
+                            if (info.audioStart)
+                                _print(ftk::Format("  audio start: {0}").
+                                    arg(core::to_string(*info.audioStart)));
+                            _print(ftk::Format("  audio duration: {0}").
+                                arg(core::to_string(info.audioDuration)));
                         }
                     }
                     catch (const std::exception& e)
@@ -84,7 +109,7 @@ namespace tl
                 }
                 else
                 {
-                    _print("Unknown file: " + input);
+                    _printError("Unknown file: " + input);
                 }
             }
         }

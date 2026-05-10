@@ -13,6 +13,8 @@
 #include "OIIORead.h"
 #endif // TL_IO_HAS_OIIO
 
+#include <ftk/Core/Context.h>
+
 namespace tl
 {
     using namespace core;
@@ -30,14 +32,15 @@ namespace tl
             _p(new Private)
         {
             FTK_P();
+            auto logSystem = context->getLogSystem();
 #if defined(TL_IO_HAS_EXR)
-            //addPlugin(EXRReadPlugin::create());
+            //addPlugin(EXRReadPlugin::create(logSystem));
 #endif // TL_IO_HAS_EXR
 #if defined(TL_IO_HAS_OIIO)
-            addPlugin(OIIOReadPlugin::create());
+            addPlugin(OIIOReadPlugin::create(logSystem));
 #endif // TL_IO_HAS_OIIO
 #if defined(TL_IO_HAS_FFMPEG)
-            //addPlugin(FFmpegReadPlugin::create());
+            addPlugin(FFmpegReadPlugin::create(logSystem));
 #endif // TL_IO_HAS_FFMPEG
         }
 

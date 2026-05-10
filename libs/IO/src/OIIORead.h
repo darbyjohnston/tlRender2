@@ -16,19 +16,22 @@ namespace tl
             OIIORead(
                 const ftk::Path&,
                 const std::vector<ftk::MemFile>&,
-                const ReadOptions&);
+                const ReadOptions&,
+                const std::shared_ptr<ftk::LogSystem>&);
 
         public:
             ~OIIORead() override;
             
             static std::shared_ptr<OIIORead> create(
                 const ftk::Path&,
-                const ReadOptions& = ReadOptions());
+                const ReadOptions&,
+                const std::shared_ptr<ftk::LogSystem>&);
             
             static std::shared_ptr<OIIORead> create(
                 const ftk::Path&,
                 const std::vector<ftk::MemFile>&,
-                const ReadOptions& = ReadOptions());
+                const ReadOptions&,
+                const std::shared_ptr<ftk::LogSystem>&);
 
             ReadInfo getInfo() override;
             std::shared_ptr<ftk::Image> getVideo(
@@ -46,21 +49,19 @@ namespace tl
             FTK_NON_COPYABLE(OIIOReadPlugin);
 
         protected:
-            void _init();
+            void _init(const std::shared_ptr<ftk::LogSystem>&);
 
             OIIOReadPlugin() = default;
 
         public:
             virtual ~OIIOReadPlugin();
             
-            static std::shared_ptr<OIIOReadPlugin> create();
+            static std::shared_ptr<OIIOReadPlugin> create(
+                const std::shared_ptr<ftk::LogSystem>&
+                                                          );
 
             bool canRead(
                 const ftk::Path&,
-                const ReadOptions& = ReadOptions()) override;
-            bool canRead(
-                const ftk::Path&,
-                const std::vector<ftk::MemFile>&,
                 const ReadOptions& = ReadOptions()) override;
             std::shared_ptr<IRead> read(
                 const ftk::Path&,

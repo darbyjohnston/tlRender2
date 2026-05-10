@@ -8,6 +8,7 @@
 
 #include <ftk/Core/FileIO.h>
 #include <ftk/Core/Image.h>
+#include <ftk/Core/LogSystem.h>
 #include <ftk/Core/Path.h>
 
 namespace tl
@@ -28,15 +29,15 @@ namespace tl
         //! Read information.
         struct TL_API_TYPE ReadInfo
         {
-            std::vector<ftk::ImageInfo> video;
-            core::MediaTime             videoTime;
-            core::MediaDuration         videoDuration;
+            std::vector<ftk::ImageInfo>    video;
+            std::optional<core::MediaTime> videoStart;
+            core::MediaDuration            videoDuration;
             
-            core::AudioInfo             audio;
-            core::MediaTime             audioTime;
-            core::MediaDuration         audioDuration;
+            std::vector<core::AudioInfo>   audio;
+            std::optional<core::MediaTime> audioStart;
+            core::MediaDuration            audioDuration;
             
-            std::map<std::string, std::string> tags;
+            ftk::ImageTags                 tags;
         };
 
         //! Read options.
@@ -52,7 +53,8 @@ namespace tl
             IRead(
                 const ftk::Path&,
                 const std::vector<ftk::MemFile>&,
-                const ReadOptions&);
+                const ReadOptions&,
+                const std::shared_ptr<ftk::LogSystem>&);
 
         public:
             virtual ~IRead() = 0;
@@ -75,6 +77,7 @@ namespace tl
             ftk::Path _path;
             std::vector<ftk::MemFile> _mem;
             ReadOptions _options;
+            std::shared_ptr<ftk::LogSystem> _logSystem;
         };
 
         //! Base class for read plugins.
@@ -83,7 +86,8 @@ namespace tl
         protected:
             void _init(
                 const std::string& name,
-                const std::map<std::string, FileType>& exts);
+                const std::map<std::string, FileType>& exts,
+                const std::shared_ptr<ftk::LogSystem>&);
 
             IReadPlugin() = default;
 
@@ -100,12 +104,6 @@ namespace tl
             virtual bool canRead(
                 const ftk::Path&,
                 const ReadOptions& = ReadOptions()) = 0;
-
-            //! Check if the plugin can read the given file.
-            virtual bool canRead(
-                const ftk::Path&,
-                const std::vector<ftk::MemFile>&,
-                const ReadOptions& = ReadOptions()) = 0;
             
             //! Get a reader for the given file.
             virtual std::shared_ptr<IRead> read(
@@ -121,6 +119,7 @@ namespace tl
         protected:
             std::string _name;
             std::map<std::string, FileType> _exts;
+            std::shared_ptr<ftk::LogSystem> _logSystem;
         };
     }
 }

@@ -19,14 +19,11 @@ namespace tl
         public:
             virtual ~EXRReadPlugin();
             
-            static std::shared_ptr<EXRReadPlugin> create();
+            static std::shared_ptr<EXRReadPlugin> create(
+                const std::shared_ptr<ftk::LogSystem>&);
 
             bool canRead(
                 const ftk::Path&,
-                const ReadOptions& = ReadOptions()) override;
-            bool canRead(
-                const ftk::Path&,
-                const std::vector<ftk::MemFile>&,
                 const ReadOptions& = ReadOptions()) override;
             std::shared_ptr<IRead> read(
                 const ftk::Path&,

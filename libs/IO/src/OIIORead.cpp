@@ -77,8 +77,9 @@ namespace tl
         OIIORead::OIIORead(
             const ftk::Path& path,
             const std::vector<ftk::MemFile>& mem,
-            const ReadOptions& options) :
-            IRead(path, mem, options)
+            const ReadOptions& options,
+            const std::shared_ptr<ftk::LogSystem>& logSystem) :
+            IRead(path, mem, options, logSystem)
         {}
 
         OIIORead::~OIIORead()
@@ -86,17 +87,19 @@ namespace tl
 
         std::shared_ptr<OIIORead> OIIORead::create(
             const ftk::Path& path,
-            const ReadOptions& options)
+            const ReadOptions& options,
+            const std::shared_ptr<ftk::LogSystem>& logSystem)
         {
-            return std::shared_ptr<OIIORead>(new OIIORead(path, {}, options));
+            return std::shared_ptr<OIIORead>(new OIIORead(path, {}, options, logSystem));
         }
 
         std::shared_ptr<OIIORead> OIIORead::create(
             const ftk::Path& path,
             const std::vector<ftk::MemFile>& mem,
-            const ReadOptions& options)
+            const ReadOptions& options,
+            const std::shared_ptr<ftk::LogSystem>& logSystem)
         {
-            return std::shared_ptr<OIIORead>(new OIIORead(path, mem, options));
+            return std::shared_ptr<OIIORead>(new OIIORead(path, mem, options, logSystem));
         }
 
         ReadInfo OIIORead::getInfo()
@@ -160,7 +163,8 @@ namespace tl
             }
             if (_path.getFrames().has_value())
             {
-                out.videoTime.frames = _path.getFrames()->min();
+                out.videoStart = core::MediaTime();
+                out.videoStart->frames = _path.getFrames()->min();
                 out.videoDuration.frames = _path.getFrames()->max();
             }
             return out;
@@ -181,7 +185,8 @@ namespace tl
             return nullptr;
         }
 
-        void OIIOReadPlugin::_init()
+        void OIIOReadPlugin::_init(
+            const std::shared_ptr<ftk::LogSystem>& logSystem)
         {
             std::map<std::string, FileType> exts;
             for (const auto& i : OIIO::get_extension_map())
@@ -195,16 +200,17 @@ namespace tl
                     }
                 }
             }
-            IReadPlugin::_init("OIIO", exts);
+            IReadPlugin::_init("OIIO", exts, logSystem);
         }
 
         OIIOReadPlugin::~OIIOReadPlugin()
         {}
             
-        std::shared_ptr<OIIOReadPlugin> OIIOReadPlugin::create()
+        std::shared_ptr<OIIOReadPlugin> OIIOReadPlugin::create(
+            const std::shared_ptr<ftk::LogSystem>& logSystem)
         {
             auto out = std::shared_ptr<OIIOReadPlugin>(new OIIOReadPlugin);
-            out->_init();
+            out->_init(logSystem);
             return out;
         }
 
@@ -212,16 +218,7 @@ namespace tl
             const ftk::Path& path,
             const ReadOptions& options)
         {
-            const auto i = _exts.find(path.getExt());
-            return i != _exts.end();
-        }
-
-        bool OIIOReadPlugin::canRead(
-            const ftk::Path& path,
-            const std::vector<ftk::MemFile>&,
-            const ReadOptions& options)
-        {
-            const auto i = _exts.find(path.getExt());
+            const auto i = _exts.find(ftk::toLower(path.getExt()));
             return i != _exts.end();
         }
 
@@ -229,7 +226,7 @@ namespace tl
             const ftk::Path& path,
             const ReadOptions& options)
         {
-            return OIIORead::create(path, options);
+            return OIIORead::create(path, options, _logSystem);
         }
 
         std::shared_ptr<IRead> OIIOReadPlugin::read(
@@ -237,7 +234,7 @@ namespace tl
             const std::vector<ftk::MemFile>& mem,
             const ReadOptions& options)
         {
-            return OIIORead::create(path, mem, options);
+            return OIIORead::create(path, mem, options, _logSystem);
         }
     }
 }

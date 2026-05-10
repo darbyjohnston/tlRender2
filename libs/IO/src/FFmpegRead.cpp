@@ -8,6 +8,7 @@
 extern "C"
 {
 #include <libavcodec/avcodec.h>
+#include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 #include <libavutil/pixdesc.h>
 #include <libavutil/timecode.h>
@@ -72,8 +73,6 @@ namespace tl
                 return offset;
             }
 
-            // RAII wrappers for FFmpeg resources.
-
             struct AVFormatContextDeleter
             {
                 void operator()(AVFormatContext* p) const
@@ -110,6 +109,36 @@ namespace tl
                 }
             };
             using AVCodecContextPtr = std::unique_ptr<AVCodecContext, AVCodecContextDeleter>;
+            
+            struct AVFrameDeleter
+            {
+                void operator()(AVFrame* p) const { if (p) { av_frame_free(&p); } }
+            };
+            using AVFramePtr = std::unique_ptr<AVFrame, AVFrameDeleter>;
+
+            struct SwsContextDeleter
+            {
+                void operator()(SwsContext* p) const { if (p) { sws_freeContext(p); } }
+            };
+            using SwsContextPtr = std::unique_ptr<SwsContext, SwsContextDeleter>;
+
+            core::AudioType toAudioType(AVSampleFormat value)
+            {
+                core::AudioType out = core::AudioType::None;
+                switch (value)
+                {
+                case AV_SAMPLE_FMT_S16:  out = core::AudioType::S16; break;
+                case AV_SAMPLE_FMT_S32:  out = core::AudioType::S32; break;
+                case AV_SAMPLE_FMT_FLT:  out = core::AudioType::F32; break;
+                case AV_SAMPLE_FMT_DBL:  out = core::AudioType::F64; break;
+                case AV_SAMPLE_FMT_S16P: out = core::AudioType::S16; break;
+                case AV_SAMPLE_FMT_S32P: out = core::AudioType::S32; break;
+                case AV_SAMPLE_FMT_FLTP: out = core::AudioType::F32; break;
+                case AV_SAMPLE_FMT_DBLP: out = core::AudioType::F64; break;
+                default: break;
+                }
+                return out;
+            }
         }
 
         std::string avErrorLabel(int r)
@@ -231,50 +260,75 @@ namespace tl
                 }
             }
             
-            // Check for timecode in a data stream.
-            int avDataStream = -1;
-            for (unsigned int i = 0; i < p.avFormatContext->nb_streams; ++i)
+            // Get metadata and look for timecode in the same pass.
+            std::string timecode;
+            std::optional<int> timeReference;
+            AVDictionaryEntry* tag = nullptr;
+            while ((tag = av_dict_get(p.avFormatContext->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
             {
-                if (AVMEDIA_TYPE_DATA == p.avFormatContext->streams[i]->codecpar->codec_type &&
-                    p.avFormatContext->streams[i]->disposition & AV_DISPOSITION_DEFAULT)
+                p.info.tags[tag->key] = tag->value;
+                if (ftk::compare(
+                    tag->key,
+                    "timecode",
+                    ftk::CaseCompare::Insensitive))
                 {
-                    avDataStream = i;
-                    break;
+                    timecode = tag->value;
+                }
+                else if (ftk::compare(
+                    tag->key,
+                    "time_reference",
+                    ftk::CaseCompare::Insensitive))
+                {
+                    timeReference = std::atoi(tag->value);
                 }
             }
-            if (-1 == avDataStream)
+            if (timecode.empty())
             {
+                // Check the data stream for timecode.
+                int avDataStream = -1;
                 for (unsigned int i = 0; i < p.avFormatContext->nb_streams; ++i)
                 {
-                    if (AVMEDIA_TYPE_DATA == p.avFormatContext->streams[i]->codecpar->codec_type)
+                    if (AVMEDIA_TYPE_DATA == p.avFormatContext->streams[i]->codecpar->codec_type &&
+                        p.avFormatContext->streams[i]->disposition & AV_DISPOSITION_DEFAULT)
                     {
                         avDataStream = i;
                         break;
                     }
                 }
-            }
-            std::string dataStreamTimecode;
-            if (avDataStream != -1)
-            {
-                AVDictionaryEntry* tag = nullptr;
-                while ((tag = av_dict_get(
-                    p.avFormatContext->streams[avDataStream]->metadata,
-                    "",
-                    tag,
-                    AV_DICT_IGNORE_SUFFIX)))
+                if (-1 == avDataStream)
                 {
-                    if (ftk::compare(
-                        tag->key,
-                        "timecode",
-                        ftk::CaseCompare::Insensitive))
+                    for (unsigned int i = 0; i < p.avFormatContext->nb_streams; ++i)
                     {
-                        dataStreamTimecode = tag->value;
-                        break;
+                        if (AVMEDIA_TYPE_DATA == p.avFormatContext->streams[i]->codecpar->codec_type)
+                        {
+                            avDataStream = i;
+                            break;
+                        }
+                    }
+                }
+                if (avDataStream != -1)
+                {
+                    AVDictionaryEntry* tag = nullptr;
+                    while ((tag = av_dict_get(
+                        p.avFormatContext->streams[avDataStream]->metadata,
+                        "",
+                        tag,
+                        AV_DICT_IGNORE_SUFFIX)))
+                    {
+                        if (ftk::compare(
+                            tag->key,
+                            "timecode",
+                            ftk::CaseCompare::Insensitive))
+                        {
+                            timecode = tag->value;
+                            break;
+                        }
                     }
                 }
             }
 
             // Get video information.
+            std::optional<AVRational> avVideoSpeed;
             if (p.avVideoStream != -1)
             {
                 auto avVideoStream = p.avFormatContext->streams[p.avVideoStream];
@@ -282,22 +336,22 @@ namespace tl
                 auto avVideoCodec = avcodec_find_decoder(avVideoCodecParameters->codec_id);
                 if (!avVideoCodec)
                 {
-                    throw std::runtime_error(ftk::Format("No codec found: \"{0}\"").arg(fileName));
+                    throw std::runtime_error(ftk::Format("No video codec found: \"{0}\"").arg(fileName));
                 }
 
-                AVCodecContextPtr videoCodecContext(avcodec_alloc_context3(avVideoCodec));
-                if (!videoCodecContext)
+                AVCodecContextPtr avVideoCodecContext(avcodec_alloc_context3(avVideoCodec));
+                if (!avVideoCodecContext)
                 {
                     throw std::runtime_error(ftk::Format("Cannot allocate context: \"{0}\"").arg(fileName));
                 }
-                r = avcodec_parameters_to_context(videoCodecContext.get(), avVideoCodecParameters);
+                r = avcodec_parameters_to_context(avVideoCodecContext.get(), avVideoCodecParameters);
                 if (r < 0)
                 {
                     throw std::runtime_error(ftk::Format("{0}: \"{1}\"").arg(avErrorLabel(r)).arg(fileName));
                 }
-                videoCodecContext->thread_count = 0;
-                videoCodecContext->thread_type = FF_THREAD_FRAME;
-                r = avcodec_open2(videoCodecContext.get(), avVideoCodec, nullptr);
+                avVideoCodecContext->thread_count = 0;
+                avVideoCodecContext->thread_type = FF_THREAD_FRAME;
+                r = avcodec_open2(avVideoCodecContext.get(), avVideoCodec, nullptr);
                 if (r < 0)
                 {
                     throw std::runtime_error(ftk::Format("{0}: \"{1}\"").arg(avErrorLabel(r)).arg(fileName));
@@ -379,7 +433,7 @@ namespace tl
                         .arg(av_get_pix_fmt_name(p.avInputPixelFormat)));
                     break;
                 }
-                if (videoCodecContext->color_range != AVCOL_RANGE_JPEG)
+                if (avVideoCodecContext->color_range != AVCOL_RANGE_JPEG)
                 {
                     imageInfo.videoLevels = ftk::VideoLevels::LegalRange;
                 }
@@ -405,37 +459,20 @@ namespace tl
                         av_get_time_base_q(),
                         avSwap(avVideoStream->r_frame_rate));
                 }
-                const AVRational avSpeed = av_guess_frame_rate(
+                avVideoSpeed = av_guess_frame_rate(
                     p.avFormatContext.get(),
                     avVideoStream,
                     nullptr);
-                const core::MediaRate rate{ avSpeed.num, avSpeed.den };
+                const core::MediaRate rate{ avVideoSpeed->num, avVideoSpeed->den };
                 p.info.videoDuration = core::MediaDuration{ frameCount, rate };
 
-                // Get metadata and look for timecode in the same pass.
-                std::string timecode;
-                AVDictionaryEntry* tag = nullptr;
-                while ((tag = av_dict_get(p.avFormatContext->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
-                {
-                    p.info.tags[tag->key] = tag->value;
-                    if (ftk::compare(
-                        tag->key,
-                        "timecode",
-                        ftk::CaseCompare::Insensitive))
-                    {
-                        timecode = tag->value;
-                    }
-                }
-                if (timecode.empty())
-                {
-                    timecode = dataStreamTimecode;
-                }
+                // Get the start time.
                 if (!timecode.empty())
                 {
                     AVTimecode avTimecode;
                     if (0 == av_timecode_init_from_string(
                         &avTimecode,
-                        avSpeed,
+                        *avVideoSpeed,
                         timecode.c_str(),
                         nullptr))
                     {
@@ -443,15 +480,104 @@ namespace tl
                         p.info.videoStart = core::MediaTime{ avTimecode.start, rate };
                     }
                 }
+                
+                // Add metadata.
+                p.info.tags["NativePixelFormat"] = av_get_pix_fmt_name(p.avInputPixelFormat);
+                
+                p.avCodecContext.emplace(p.avVideoStream, std::move(avVideoCodecContext));
+            }
 
-                // Transfer ownership into the map only after all video setup
-                // has succeeded. If anything above threw, the local
-                // videoCodecContext destructor cleans up.
-                p.avCodecContext.emplace(p.avVideoStream, std::move(videoCodecContext));
+            // Get audio information.
+            if (p.avAudioStream != -1)
+            {
+                auto avAudioStream = p.avFormatContext->streams[p.avAudioStream];
+                auto avAudioCodecParameters = avAudioStream->codecpar;
+                auto avAudioCodec = avcodec_find_decoder(avAudioCodecParameters->codec_id);
+                if (!avAudioCodec)
+                {
+                    throw std::runtime_error(ftk::Format("No audio codec found: \"{0}\"").arg(fileName));
+                }
+
+                AVCodecContextPtr avAudioCodecContext(avcodec_alloc_context3(avAudioCodec));
+                if (!avAudioCodecContext)
+                {
+                    throw std::runtime_error(ftk::Format("Cannot allocate context: \"{0}\"").arg(fileName));
+                }
+                r = avcodec_parameters_to_context(avAudioCodecContext.get(), avAudioCodecParameters);
+                if (r < 0)
+                {
+                    throw std::runtime_error(ftk::Format("{0}: \"{1}\"").arg(avErrorLabel(r)).arg(fileName));
+                }
+                avAudioCodecContext->thread_count = 0;
+                avAudioCodecContext->thread_type = FF_THREAD_FRAME;
+                r = avcodec_open2(avAudioCodecContext.get(), avAudioCodec, nullptr);
+                if (r < 0)
+                {
+                    throw std::runtime_error(ftk::Format("{0}: \"{1}\"").arg(avErrorLabel(r)).arg(fileName));
+                }
+
+                core::AudioInfo audioInfo;
+                audioInfo.channelCount = avAudioCodecParameters->ch_layout.nb_channels;
+                audioInfo.type = toAudioType(static_cast<AVSampleFormat>(avAudioCodecParameters->format));
+                if (core::AudioType::None == audioInfo.type)
+                {
+                    throw std::runtime_error(ftk::Format("Unsupported audio format: \"{0}\": {1}").
+                        arg(fileName).
+                        arg(av_get_sample_fmt_name(static_cast<AVSampleFormat>(avAudioCodecParameters->format))));
+                }
+                audioInfo.sampleRate = avAudioCodecParameters->sample_rate;
+                p.info.audio.push_back(audioInfo);
+
+                // Get the duration.
+                int64_t sampleCount = 0;
+                if (avAudioStream->duration != AV_NOPTS_VALUE)
+                {
+                    AVRational r;
+                    r.num = 1;
+                    r.den = audioInfo.sampleRate;
+                    sampleCount = av_rescale_q(
+                        avAudioStream->duration,
+                        avAudioStream->time_base,
+                        r);
+                }
+                else if (p.avFormatContext->duration != AV_NOPTS_VALUE)
+                {
+                    AVRational r;
+                    r.num = 1;
+                    r.den = audioInfo.sampleRate;
+                    sampleCount = av_rescale_q(
+                        p.avFormatContext->duration,
+                        av_get_time_base_q(),
+                        r);
+                }
+                const core::MediaRate audioRate{ audioInfo.sampleRate, 1 };
+                p.info.audioDuration = core::MediaDuration{ sampleCount, audioRate };
+
+                // Get the start time.
+                if (!timecode.empty() && avVideoSpeed)
+                {
+                    AVTimecode avTimecode;
+                    if (0 == av_timecode_init_from_string(
+                        &avTimecode,
+                        *avVideoSpeed,
+                        timecode.c_str(),
+                        nullptr))
+                    {
+                        const int64_t audioSampleStart = av_rescale_q(
+                            avTimecode.start,
+                            avSwap(avTimecode.rate),
+                            AVRational{ 1, audioInfo.sampleRate });
+                        p.info.audioStart = core::MediaTime{ audioSampleStart, audioRate };
+                    }
+                }
+                else if (timeReference)
+                {
+                    p.info.audioStart = core::MediaTime{ *timeReference, audioRate };
+                }
+
+                p.avCodecContext.emplace(p.avAudioStream, std::move(avAudioCodecContext));
             }
         }
-
-        FFmpegRead::~FFmpegRead() = default;
 
         std::shared_ptr<FFmpegRead> FFmpegRead::create(
             const ftk::Path& path,

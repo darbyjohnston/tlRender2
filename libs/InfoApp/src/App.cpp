@@ -69,7 +69,7 @@ namespace tl
                         }
                         const auto info = read->getInfo();
                         
-                        _print(path.get() + ":");
+                        _print("\"" + path.get() + "\":");
                         for (size_t i = 0; i < info.video.size(); ++i)
                         {
                             const auto& video = info.video[i];
@@ -77,12 +77,15 @@ namespace tl
                             _print(ftk::Format("    size: {0}x{1}").
                                 arg(video.size.w).
                                 arg(video.size.h));
+                            _print(ftk::Format("    type: {0}").arg(video.type));
                         }
                         if (!info.video.empty())
                         {
                             if (info.videoStart)
+                            {
                                 _print(ftk::Format("  video start: {0}").
                                     arg(core::to_string(*info.videoStart)));
+                            }
                             _print(ftk::Format("  video duration: {0}").
                                 arg(core::to_string(info.videoDuration)));
                         }
@@ -90,16 +93,25 @@ namespace tl
                         {
                             const auto& audio = info.audio[i];
                             _print(ftk::Format("  audio {0}:").arg(i));
-                            _print(ftk::Format("    channels: {0}").
-                                arg(audio.channelCount));
+                            _print(ftk::Format("    channels: {0}").arg(audio.channelCount));
+                            _print(ftk::Format("    type: {0}").arg(audio.type));
+                            _print(ftk::Format("    sample rate: {0}").arg(audio.sampleRate));
                         }
                         if (!info.audio.empty())
                         {
                             if (info.audioStart)
+                            {
                                 _print(ftk::Format("  audio start: {0}").
                                     arg(core::to_string(*info.audioStart)));
+                            }
                             _print(ftk::Format("  audio duration: {0}").
                                 arg(core::to_string(info.audioDuration)));
+                        }
+                        for (const auto& tag : info.tags)
+                        {
+                            _print(ftk::Format("  tag \"{0}\": \"{1}\"").
+                                arg(tag.first).
+                                arg(tag.second));
                         }
                     }
                     catch (const std::exception& e)

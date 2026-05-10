@@ -31,7 +31,7 @@ namespace tl
                 const std::shared_ptr<ftk::LogSystem>&);
 
         public:
-            ~FFmpegRead() override;
+            ~FFmpegRead() override = default;
             
             static std::shared_ptr<FFmpegRead> create(
                 const ftk::Path&,

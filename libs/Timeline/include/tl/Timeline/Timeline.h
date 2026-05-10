@@ -7,7 +7,9 @@
 #include <tl/Core/Audio.h>
 #include <tl/Core/Time.h>
 
+#include <ftk/Core/Context.h>
 #include <ftk/Core/Observable.h>
+#include <ftk/Core/Path.h>
 
 namespace tl
 {
@@ -19,7 +21,9 @@ namespace tl
             FTK_NON_COPYABLE(Timeline);
 
         protected:
-            void _init(const std::string&);
+            void _init(
+                const std::shared_ptr<ftk::Context>&,
+                const ftk::Path&);
 
             Timeline();
 
@@ -27,11 +31,22 @@ namespace tl
             ~Timeline();
 
             //! Create an empty timeline.
-            static std::shared_ptr<Timeline> create();
+            static std::shared_ptr<Timeline> create(
+                const std::shared_ptr<ftk::Context>&);
 
             //! Create a new timeline from an .otio, .otioz, or .otiod file.
-            static std::shared_ptr<Timeline> create(const std::string&);
-            
+            static std::shared_ptr<Timeline> create(
+                const std::shared_ptr<ftk::Context>&,
+                const ftk::Path&);
+
+            //! Get the path the timeline was loaded from, or an empty path if
+            //! the timeline was created empty.
+            const ftk::Path& getPath() const;
+
+            //! Get the resolved media paths referenced by the timeline. Paths
+            //! are absolute, deduplicated, and the order is unspecified.
+            const std::vector<ftk::Path>& getMediaPaths() const;
+
             //! Get the timeline start time.
             const core::Time& getStartTime() const;
 

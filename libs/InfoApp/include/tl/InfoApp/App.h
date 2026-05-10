@@ -3,10 +3,11 @@
 
 #pragma once
 
-#include <tl/Core/Util.h>
+#include <tl/IO/IOSystem.h>
 
 #include <ftk/Core/CmdLine.h>
 #include <ftk/Core/IApp.h>
+#include <ftk/Core/Path.h>
 
 namespace tl
 {
@@ -42,6 +43,18 @@ namespace tl
             void run() override;
 
         private:
+            // Print info for one media file. Returns false if the extension
+            // isn't recognized by any plugin in the ReadSystem.
+            bool _printMedia(
+                const std::shared_ptr<io::ReadSystem>&,
+                ftk::Path,
+                int indent = 0);
+
+            // Open a timeline and print info for each of its media references.
+            void _printTimeline(
+                const std::shared_ptr<io::ReadSystem>&,
+                const ftk::Path&);
+
             CmdLine _cmdLine;
         };
     }

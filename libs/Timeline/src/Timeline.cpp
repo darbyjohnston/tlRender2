@@ -3,7 +3,14 @@
 
 #include <tl/Timeline/Timeline.h>
 
+#include <ftk/Core/Format.h>
+
+#include <opentimelineio/clip.h>
+#include <opentimelineio/externalReference.h>
 #include <opentimelineio/timeline.h>
+#include <opentimelineio/track.h>
+
+#include <filesystem>
 
 namespace tl
 {
@@ -72,19 +79,99 @@ namespace tl
                     static_cast<double>(d.frames),
                     d.rate.toDouble());
             }
+
+            // Resolve an ExternalReference's target_url relative to the
+            // timeline file's directory. Handles absolute paths, relative
+            // paths, and the file:// URL scheme. URL-encoded characters are
+            // not currently decoded; OTIO files in the wild rarely use them
+            // for local references.
+            std::optional<ftk::Path> resolveExternalReference(
+                const std::string& targetUrl,
+                const std::filesystem::path& timelineDir)
+            {
+                if (targetUrl.empty())
+                {
+                    return std::nullopt;
+                }
+
+                std::string s = targetUrl;
+                constexpr const char* fileScheme = "file://";
+                if (s.compare(0, 7, fileScheme) == 0)
+                {
+                    s = s.substr(7);
+                }
+
+                std::filesystem::path p(s);
+                if (p.is_relative() && !timelineDir.empty())
+                {
+                    p = timelineDir / p;
+                }
+                std::error_code ec;
+                auto resolved = std::filesystem::weakly_canonical(p, ec);
+                if (ec)
+                {
+                    resolved = p;
+                }
+                return ftk::Path(resolved.string());
+            }
         }
 
         struct Timeline::Private
         {
+            std::shared_ptr<ftk::Context> context;
+            ftk::Path path;
+            std::vector<ftk::Path> mediaPaths;
             std::shared_ptr<ftk::Observable<Time> > startTime;
             std::shared_ptr<ftk::Observable<Duration> > duration;
         };
 
-        void Timeline::_init(const std::string&)
+        void Timeline::_init(
+            const std::shared_ptr<ftk::Context>& context,
+            const ftk::Path& path)
         {
             FTK_P();
+            p.context = context;
+            p.path = path;
             p.startTime = ftk::Observable<Time>::create();
             p.duration = ftk::Observable<Duration>::create();
+
+            if (path.get().empty())
+            {
+                return;
+            }
+
+            // Parse the OTIO file.
+            OTIO_NS::ErrorStatus errorStatus;
+            OTIO_NS::SerializableObject::Retainer<OTIO_NS::Timeline> otioTimeline(
+                dynamic_cast<OTIO_NS::Timeline*>(
+                    OTIO_NS::Timeline::from_json_file(path.get(), &errorStatus)));
+            if (!otioTimeline || OTIO_NS::is_error(errorStatus))
+            {
+                throw std::runtime_error(ftk::Format("Cannot read timeline \"{0}\": {1}").
+                    arg(path.get()).
+                    arg(errorStatus.full_description));
+            }
+            
+            // Collect external media references.
+            const auto timelineDir = std::filesystem::path(path.get()).parent_path();
+            std::set<std::string> seen;
+            for (const auto& otioClip : otioTimeline->find_clips())
+            {
+                if (auto otioExternalRef =
+                    dynamic_cast<OTIO_NS::ExternalReference*>(otioClip->media_reference()))
+                {
+                    if (auto resolved = resolveExternalReference(
+                        otioExternalRef->target_url(),
+                        timelineDir))
+                    {
+                        const std::string key = resolved->get();
+                        if (seen.insert(key).second)
+                        {
+                            p.mediaPaths.push_back(*resolved);
+                        }
+                    }
+                }
+            }
         }
 
         Timeline::Timeline() :
@@ -94,20 +181,33 @@ namespace tl
         Timeline::~Timeline()
         {}
 
-        std::shared_ptr<Timeline> Timeline::create()
+        std::shared_ptr<Timeline> Timeline::create(
+            const std::shared_ptr<ftk::Context>& context)
         {
             auto out = std::shared_ptr<Timeline>(new Timeline);
-            out->_init(std::string());
+            out->_init(context, ftk::Path());
             return out;
         }
 
-        std::shared_ptr<Timeline> Timeline::create(const std::string& fileName)
+        std::shared_ptr<Timeline> Timeline::create(
+            const std::shared_ptr<ftk::Context>& context,
+            const ftk::Path& path)
         {
             auto out = std::shared_ptr<Timeline>(new Timeline);
-            out->_init(fileName);
+            out->_init(context, path);
             return out;
         }
-        
+
+        const ftk::Path& Timeline::getPath() const
+        {
+            return _p->path;
+        }
+
+        const std::vector<ftk::Path>& Timeline::getMediaPaths() const
+        {
+            return _p->mediaPaths;
+        }
+
         const Time& Timeline::getStartTime() const
         {
             return _p->startTime->get();

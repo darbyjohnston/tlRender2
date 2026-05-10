@@ -30,14 +30,14 @@ namespace tl
         inline double MediaTime::toSeconds() const
         {
             return rate.num != 0 ?
-                static_cast<double>(value) * rate.den / rate.num :
+                static_cast<double>(frames) * rate.den / rate.num :
                 0.0;
         }
 
         inline double MediaDuration::toSeconds() const
         {
             return rate.num != 0 ?
-                static_cast<double>(value) * rate.den / rate.num :
+                static_cast<double>(frames) * rate.den / rate.num :
                 0.0;
         }
 

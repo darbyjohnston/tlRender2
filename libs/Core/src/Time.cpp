@@ -24,7 +24,7 @@ namespace tl
 
         bool operator == (const MediaTime& a, const MediaTime& b)
         {
-            return a.value == b.value && a.rate == b.rate;
+            return a.frames == b.frames && a.rate == b.rate;
         }
 
         bool operator != (const MediaTime& a, const MediaTime& b)
@@ -34,7 +34,7 @@ namespace tl
 
         bool operator == (const MediaDuration& a, const MediaDuration& b)
         {
-            return a.value == b.value && a.rate == b.rate;
+            return a.frames == b.frames && a.rate == b.rate;
         }
 
         bool operator != (const MediaDuration& a, const MediaDuration& b)
@@ -59,7 +59,7 @@ namespace tl
             out.rate = target;
             if (in.rate == target)
             {
-                out.value = in.value;
+                out.frames = in.frames;
             }
             else if (in.rate.isValid() && target.isValid())
             {
@@ -68,12 +68,12 @@ namespace tl
                 //              = value_in * target.num * in.rate.den /
                 //                          (target.den * in.rate.num)
                 const double v =
-                    static_cast<double>(in.value) *
+                    static_cast<double>(in.frames) *
                     static_cast<double>(target.num) *
                     static_cast<double>(in.rate.den) /
                     (static_cast<double>(target.den) *
                      static_cast<double>(in.rate.num));
-                out.value = roundToInt64(v);
+                out.frames = roundToInt64(v);
             }
             return out;
         }
@@ -84,17 +84,17 @@ namespace tl
             out.rate = target;
             if (in.rate == target)
             {
-                out.value = in.value;
+                out.frames = in.frames;
             }
             else if (in.rate.isValid() && target.isValid())
             {
                 const double v =
-                    static_cast<double>(in.value) *
+                    static_cast<double>(in.frames) *
                     static_cast<double>(target.num) *
                     static_cast<double>(in.rate.den) /
                     (static_cast<double>(target.den) *
                      static_cast<double>(in.rate.num));
-                out.value = roundToInt64(v);
+                out.frames = roundToInt64(v);
             }
             return out;
         }
@@ -117,13 +117,13 @@ namespace tl
         std::string to_string(const MediaTime& t)
         {
             return ftk::Format("{0}@{1}/{2}").
-                arg(t.value).arg(t.rate.num).arg(t.rate.den).str();
+                arg(t.frames).arg(t.rate.num).arg(t.rate.den).str();
         }
 
         std::string to_string(const MediaDuration& d)
         {
             return ftk::Format("{0}@{1}/{2}").
-                arg(d.value).arg(d.rate.num).arg(d.rate.den).str();
+                arg(d.frames).arg(d.rate.num).arg(d.rate.den).str();
         }
 
         std::ostream& operator << (std::ostream& os, Time t)

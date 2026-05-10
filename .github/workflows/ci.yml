@@ -87,6 +87,6 @@ jobs:
       - name: Upload install tree
         uses: actions/upload-artifact@v4
         with:
-          name: tlRender2-${{ matrix.os }}
+          name: tlRender2-${{ matrix.os }}-${{ matrix.config }}
           path: ${{ github.workspace }}/install
           retention-days: 7

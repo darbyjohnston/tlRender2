@@ -9,26 +9,32 @@ namespace tl
 {
     namespace io
     {
-        class FFmpegRead : public IReadPlugin
+        class FFmpegReadPlugin : public IReadPlugin
         {
-            FTK_NON_COPYABLE(FFmpegRead);
+            FTK_NON_COPYABLE(FFmpegReadPlugin);
 
         protected:
-            void _init(const std::string&);
-
-            FFmpegRead();
+            FFmpegReadPlugin();
 
         public:
-            virtual ~FFmpegRead();
+            virtual ~FFmpegReadPlugin();
+            
+            static std::shared_ptr<FFmpegReadPlugin> create();
 
-            ReadInfo getInfo() override;
-            std::shared_ptr<ftk::Image> getVideo(
-                const core::MediaTime&,
-                const ReadVideoOptions& = ReadVideoOptions()) override;
-            std::shared_ptr<core::Audio> getAudio(
-                const core::MediaTime&,
-                size_t sampleCount,
-                const ReadAudioOptions& = ReadAudioOptions()) override;
+            bool canRead(
+                const ftk::Path&,
+                const ReadOptions& = ReadOptions()) override;
+            bool canRead(
+                const ftk::Path&,
+                const std::vector<ftk::MemFile>&,
+                const ReadOptions& = ReadOptions()) override;
+            std::shared_ptr<IRead> read(
+                const ftk::Path&,
+                const ReadOptions& = ReadOptions()) override;
+            std::shared_ptr<IRead> read(
+                const ftk::Path&,
+                const std::vector<ftk::MemFile>&,
+                const ReadOptions& = ReadOptions()) override;
 
         private:
             FTK_PRIVATE();

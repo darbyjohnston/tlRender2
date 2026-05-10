@@ -9,29 +9,66 @@ namespace tl
 {
     namespace io
     {
-        class OIIORead : public IReadPlugin
+        //! OIIO reader.
+        class OIIORead : public IRead
         {
-            FTK_NON_COPYABLE(OIIORead);
-
         protected:
-            void _init(const std::string&);
-
-            OIIORead();
+            OIIORead(
+                const ftk::Path&,
+                const std::vector<ftk::MemFile>&,
+                const ReadOptions&);
 
         public:
-            virtual ~OIIORead();
+            ~OIIORead() override;
+            
+            static std::shared_ptr<OIIORead> create(
+                const ftk::Path&,
+                const ReadOptions& = ReadOptions());
+            
+            static std::shared_ptr<OIIORead> create(
+                const ftk::Path&,
+                const std::vector<ftk::MemFile>&,
+                const ReadOptions& = ReadOptions());
 
             ReadInfo getInfo() override;
             std::shared_ptr<ftk::Image> getVideo(
                 const core::MediaTime&,
-                const ReadVideoOptions& = ReadVideoOptions()) override;
+                const ReadOptions& = ReadOptions()) override;
             std::shared_ptr<core::Audio> getAudio(
                 const core::MediaTime&,
                 size_t sampleCount,
-                const ReadAudioOptions& = ReadAudioOptions()) override;
+                const ReadOptions& = ReadOptions()) override;
+        };
 
-        private:
-            FTK_PRIVATE();
+        //! OIIO read plugin.
+        class OIIOReadPlugin : public IReadPlugin
+        {
+            FTK_NON_COPYABLE(OIIOReadPlugin);
+
+        protected:
+            void _init();
+
+            OIIOReadPlugin() = default;
+
+        public:
+            virtual ~OIIOReadPlugin();
+            
+            static std::shared_ptr<OIIOReadPlugin> create();
+
+            bool canRead(
+                const ftk::Path&,
+                const ReadOptions& = ReadOptions()) override;
+            bool canRead(
+                const ftk::Path&,
+                const std::vector<ftk::MemFile>&,
+                const ReadOptions& = ReadOptions()) override;
+            std::shared_ptr<IRead> read(
+                const ftk::Path&,
+                const ReadOptions& = ReadOptions()) override;
+            std::shared_ptr<IRead> read(
+                const ftk::Path&,
+                const std::vector<ftk::MemFile>&,
+                const ReadOptions& = ReadOptions()) override;
         };
     }
 }

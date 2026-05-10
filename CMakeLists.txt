@@ -100,9 +100,11 @@ include(GNUInstallDirs)
 
 add_subdirectory(libs/Core)
 add_subdirectory(libs/IO)
+add_subdirectory(libs/InfoApp)
 add_subdirectory(libs/Timeline)
 add_subdirectory(libs/UI)
 
+add_subdirectory(apps/tlinfo)
 add_subdirectory(apps/tlrender)
 add_subdirectory(apps/tlplayer)
 

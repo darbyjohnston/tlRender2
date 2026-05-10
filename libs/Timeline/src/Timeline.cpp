@@ -56,20 +56,20 @@ namespace tl
             MediaDuration mediaDurationFromOTIO(const OTIO_NS::RationalTime& rt)
             {
                 const auto t = mediaTimeFromOTIO(rt);
-                return MediaDuration{ t.value, t.rate };
+                return MediaDuration{ t.frames, t.rate };
             }
 
             OTIO_NS::RationalTime mediaTimeToOTIO(const MediaTime& t)
             {
                 return OTIO_NS::RationalTime(
-                    static_cast<double>(t.value),
+                    static_cast<double>(t.frames),
                     t.rate.toDouble());
             }
 
             OTIO_NS::RationalTime mediaDurationToOTIO(const MediaDuration& d)
             {
                 return OTIO_NS::RationalTime(
-                    static_cast<double>(d.value),
+                    static_cast<double>(d.frames),
                     d.rate.toDouble());
             }
         }

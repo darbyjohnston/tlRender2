@@ -7,12 +7,42 @@ namespace tl
 {
     namespace io
     {
-        void IReadPlugin::_init(const std::string& fileName)
+        TL_ENUM_IMPL(
+            FileType,
+            "Media",
+            "Seq");
+
+        IRead::IRead(
+            const ftk::Path& path,
+            const std::vector<ftk::MemFile>& mem,
+            const ReadOptions& options) :
+            _path(path),
+            _mem(mem),
+            _options(options)
+        {}
+
+        IRead::~IRead()
+        {}
+
+        void IReadPlugin::_init(
+            const std::string& name,
+            const std::map<std::string, FileType>& exts)
         {
-            _fileName = fileName;
+            _name = name;
+            _exts = exts;
         }
 
         IReadPlugin::~IReadPlugin()
         {}
+
+        const std::string& IReadPlugin::getName() const
+        {
+            return _name;
+        }
+
+        const std::map<std::string, FileType>& IReadPlugin::getExts() const
+        {
+            return _exts;
+        }
     }
 }

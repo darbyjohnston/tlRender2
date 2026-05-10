@@ -7,8 +7,10 @@ add_library(tlIO)
 target_sources(tlIO
     PRIVATE
         include/tl/IO/AudioResample.h
+        include/tl/IO/IOSystem.h
         include/tl/IO/Plugin.h
         src/AudioResample.cpp
+        src/IOSystem.cpp
         src/Plugin.cpp)
 
 target_include_directories(tlIO

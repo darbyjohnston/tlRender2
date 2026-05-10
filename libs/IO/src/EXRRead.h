@@ -9,26 +9,32 @@ namespace tl
 {
     namespace io
     {
-        class EXRRead : public IReadPlugin
+        class EXRReadPlugin : public IReadPlugin
         {
-            FTK_NON_COPYABLE(EXRRead);
+            FTK_NON_COPYABLE(EXRReadPlugin);
 
         protected:
-            void _init(const std::string&);
-
-            EXRRead();
+            EXRReadPlugin();
 
         public:
-            virtual ~EXRRead();
+            virtual ~EXRReadPlugin();
+            
+            static std::shared_ptr<EXRReadPlugin> create();
 
-            ReadInfo getInfo() override;
-            std::shared_ptr<ftk::Image> getVideo(
-                const core::MediaTime&,
-                const ReadVideoOptions& = ReadVideoOptions()) override;
-            std::shared_ptr<core::Audio> getAudio(
-                const core::MediaTime&,
-                size_t sampleCount,
-                const ReadAudioOptions& = ReadAudioOptions()) override;
+            bool canRead(
+                const ftk::Path&,
+                const ReadOptions& = ReadOptions()) override;
+            bool canRead(
+                const ftk::Path&,
+                const std::vector<ftk::MemFile>&,
+                const ReadOptions& = ReadOptions()) override;
+            std::shared_ptr<IRead> read(
+                const ftk::Path&,
+                const ReadOptions& = ReadOptions()) override;
+            std::shared_ptr<IRead> read(
+                const ftk::Path&,
+                const std::vector<ftk::MemFile>&,
+                const ReadOptions& = ReadOptions()) override;
 
         private:
             FTK_PRIVATE();

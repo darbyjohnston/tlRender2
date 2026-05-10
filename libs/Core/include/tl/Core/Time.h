@@ -51,20 +51,20 @@ namespace tl
         TL_API MediaRate mediaRate60();
         TL_API MediaRate mediaRate59_94();
 
-        //! Media time, in samples at a given rate.
+        //! Media time, in frames at a given rate.
         struct TL_API_TYPE MediaTime
         {
-            int64_t   value = 0;
+            int64_t   frames = 0;
             MediaRate rate;
 
             //! Get the time in seconds.
             double toSeconds() const;
         };
 
-        //! Media duration, in samples at a given rate.
+        //! Media duration, in frames at a given rate.
         struct TL_API_TYPE MediaDuration
         {
-            int64_t   value = 0;
+            int64_t   frames = 0;
             MediaRate rate;
 
             //! Get the duration in seconds.

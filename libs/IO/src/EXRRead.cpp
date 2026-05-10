@@ -7,38 +7,27 @@ namespace tl
 {
     namespace io
     {
-        struct EXRRead::Private
+        struct EXRReadPlugin::Private
         {
         };
 
-        void EXRRead::_init(const std::string& fileName)
-        {
-            IReadPlugin::_init(fileName);
-        }
-
-        EXRRead::EXRRead() :
+        EXRReadPlugin::EXRReadPlugin() :
             _p(new Private)
         {}
         
-        EXRRead::~EXRRead()
+        EXRReadPlugin::~EXRReadPlugin()
         {}
 
-        ReadInfo EXRRead::getInfo()
+        bool EXRReadPlugin::canRead(
+            const ftk::Path& path,
+            const ReadOptions& options)
         {
-            return ReadInfo();
+            return false;
         }
 
-        std::shared_ptr<ftk::Image> EXRRead::getVideo(
-            const core::MediaTime&,
-            const ReadVideoOptions&)
-        {
-            return nullptr;
-        }
-
-        std::shared_ptr<core::Audio> EXRRead::getAudio(
-            const core::MediaTime&,
-            size_t sampleCount,
-            const ReadAudioOptions&)
+        std::shared_ptr<IRead> EXRReadPlugin::read(
+            const ftk::Path& path,
+            const ReadOptions& options)
         {
             return nullptr;
         }

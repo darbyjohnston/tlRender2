@@ -188,7 +188,7 @@ namespace tl
             // Default construction.
             {
                 const core::MediaTime t;
-                FTK_ASSERT(t.value == 0);
+                FTK_ASSERT(t.frames == 0);
                 FTK_ASSERT(t.toSeconds() == 0.0);
             }
             // toSeconds at 24fps: 48 frames = 2 seconds.
@@ -228,20 +228,20 @@ namespace tl
             {
                 const core::MediaTime in{ 50, core::mediaRate24() };
                 const auto out = core::rescale(in, core::mediaRate48());
-                FTK_ASSERT(out.value == 100);
+                FTK_ASSERT(out.frames == 100);
                 FTK_ASSERT(out.rate == core::mediaRate48());
             }
             // 48 -> 24: halves.
             {
                 const core::MediaTime in{ 100, core::mediaRate48() };
                 const auto out = core::rescale(in, core::mediaRate24());
-                FTK_ASSERT(out.value == 50);
+                FTK_ASSERT(out.frames == 50);
             }
             // MediaDuration rescale parallels MediaTime.
             {
                 const core::MediaDuration in{ 30, core::mediaRate30() };
                 const auto out = core::rescale(in, core::mediaRate60());
-                FTK_ASSERT(out.value == 60);
+                FTK_ASSERT(out.frames == 60);
             }
             // Cross-NTSC: 24 frames at 23.976 -> 24000 samples at... no, that's
             // not a clean number. Test that the round-trip is at least close.
@@ -251,7 +251,7 @@ namespace tl
                     core::rescale(in, core::mediaRate30()),
                     core::mediaRate23_976());
                 // Allow a 1-frame slop from rounding.
-                FTK_ASSERT(std::abs(roundTripped.value - in.value) <= 1);
+                FTK_ASSERT(std::abs(roundTripped.frames - in.frames) <= 1);
             }
             // Invalid rate fallback: target rate stored, value left zero.
             {

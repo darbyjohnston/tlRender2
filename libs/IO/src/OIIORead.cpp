@@ -13,6 +13,7 @@ namespace tl
         namespace
         {
             constexpr core::MediaRate defaultRate{ 24, 1 };
+            constexpr core::MediaRate defaultStillRate{ 1, 1 };
 
             void oiioDiscardError()
             {
@@ -169,12 +170,13 @@ namespace tl
                 out.videoStart->frames = _path.getFrames()->min();
                 out.videoStart->rate = defaultRate;
                 out.videoDuration.frames = _path.getFrames()->size();
+                out.videoDuration.rate = defaultRate;
             }
             else
             {
                 out.videoDuration.frames = 1;
+                out.videoDuration.rate = defaultStillRate;
             }
-            out.videoDuration.rate = defaultRate;
             return out;
         }
 

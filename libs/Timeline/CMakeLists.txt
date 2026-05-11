@@ -12,6 +12,8 @@ target_sources(tlTimeline
         src/Timeline.cpp
         src/TimeUtil.cpp
         src/TimeUtil.h
+        src/TimelineUtil.cpp
+        src/TimelineUtil.h
         src/VideoGraph.cpp
         src/ZipUtil.cpp
         src/ZipUtil.h)

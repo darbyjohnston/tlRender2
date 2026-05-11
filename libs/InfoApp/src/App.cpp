@@ -119,9 +119,9 @@ namespace tl
                     const auto& audio = info.audio[i];
                     _printIndented(ftk::Format("audio {0}:").arg(i), indent);
                     indent += 2;
-                    _printIndented(ftk::Format("channels: {0}").
-                        arg(audio.channelCount),
-                        indent);
+                    _printIndented(ftk::Format("channels: {0}").arg(audio.channelCount), indent);
+                    _printIndented(ftk::Format("type: {0}").arg(audio.type), indent);
+                    _printIndented(ftk::Format("sample rate: {0}").arg(audio.sampleRate), indent);
                 }
                 if (!info.audio.empty())
                 {

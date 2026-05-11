@@ -4,6 +4,7 @@
 #include <tl/Timeline/Timeline.h>
 
 #include "TimeUtil.h"
+#include "TimelineUtil.h"
 #include "ZipUtil.h"
 
 #include <ftk/Core/Format.h>
@@ -21,57 +22,144 @@ namespace tl
 
     namespace timeline
     {
-        namespace
-        {
-            // Resolve an ExternalReference's target_url relative to the
-            // timeline file's directory. Handles absolute paths, relative
-            // paths, and the file:// URL scheme. URL-encoded characters are
-            // not currently decoded; OTIO files in the wild rarely use them
-            // for local references.
-            std::optional<ftk::Path> resolveExternalReference(
-                const std::string& targetUrl,
-                const std::filesystem::path& timelineDir)
-            {
-                if (targetUrl.empty())
-                {
-                    return std::nullopt;
-                }
-
-                std::string s = targetUrl;
-                constexpr const char* fileScheme = "file://";
-                if (s.compare(0, 7, fileScheme) == 0)
-                {
-                    s = s.substr(7);
-                }
-
-                std::filesystem::path p(s);
-                if (p.is_relative() && !timelineDir.empty())
-                {
-                    p = timelineDir / p;
-                }
-                std::error_code ec;
-                auto resolved = std::filesystem::weakly_canonical(p, ec);
-                if (ec)
-                {
-                    resolved = p;
-                }
-                return ftk::Path(resolved.string());
-            }
-        }
-
         IItem::~IItem()
         {}
 
         struct Timeline::Private
         {
+            void readTrack(OTIO_NS::Track*);
+            void readClip(
+                const std::shared_ptr<Track>&,
+                OTIO_NS::Clip*);
+            void readExtRef(
+                const std::shared_ptr<Clip>&,
+                const std::string&,
+                OTIO_NS::ExternalReference*);
+
             std::shared_ptr<ftk::Context> context;
             ftk::Path path;
             std::shared_ptr<ftk::FileIO> fileIO;
+            std::map<std::string, ftk::MemFile> zipMem;
             MediaRate rate = MediaRate{ 24, 1 };
             std::shared_ptr<ftk::Observable<Time> > startTime;
             std::shared_ptr<ftk::Observable<Duration> > duration;
             std::shared_ptr<Stack> stack;
+            std::filesystem::path timelineDir;
+            std::map<std::string, std::shared_ptr<Media>> seen;
         };
+
+        void Timeline::Private::readTrack(OTIO_NS::Track* otioTrack)
+        {
+            auto track = std::make_shared<Track>();
+            track->name = otioTrack->name();
+            auto range = otioTrack->trimmed_range_in_parent();
+            if (!range.has_value())
+            {
+                range = otioTrack->trimmed_range();
+            }
+            if (range.has_value())
+            {
+                track->startTime = timeFromOTIO(range->start_time(), rate.toDouble());
+                track->duration = durationFromOTIO(range->duration(), rate.toDouble());
+            }
+            stack->children.push_back(track);
+
+            // Read the clips.
+            for (const auto& otioTrackChild : otioTrack->children())
+            {
+                if (auto otioClip = OTIO_NS::dynamic_retainer_cast<OTIO_NS::Clip>(otioTrackChild))
+                {
+                    readClip(track, otioClip);
+                }
+            }
+        }
+
+        void Timeline::Private::readClip(
+            const std::shared_ptr<Track>& track,
+            OTIO_NS::Clip* otioClip)
+        {
+            auto clip = std::make_shared<Clip>();
+            clip->name = otioClip->name();
+            auto range = otioClip->trimmed_range_in_parent();
+            if (!range.has_value())
+            {
+                range = otioClip->trimmed_range();
+            }
+            if (range.has_value())
+            {
+                clip->startTime = timeFromOTIO(range->start_time(), rate.toDouble());
+                clip->duration = durationFromOTIO(range->duration(), rate.toDouble());
+            }
+            track->children.push_back(clip);
+
+            // Read the media references.
+            clip->activeMediaReference = otioClip->active_media_reference_key();
+            for (const auto& refIt : otioClip->media_references())
+            {
+                if (auto otioExternalRef =
+                    dynamic_cast<OTIO_NS::ExternalReference*>(refIt.second))
+                {
+                    readExtRef(clip, refIt.first, otioExternalRef);
+                }
+            }
+        }
+
+        void Timeline::Private::readExtRef(
+            const std::shared_ptr<Clip>& clip,
+            const std::string& name,
+            OTIO_NS::ExternalReference* otioExternalRef)
+        {
+            const std::string targetUrl = otioExternalRef->target_url();
+
+            std::vector<ftk::MemFile> refMem;
+            if (!zipMem.empty())
+            {
+                auto it = zipMem.find(targetUrl);
+                if (it == zipMem.end())
+                {
+                    it = zipMem.find("media/" + targetUrl);
+                }
+                if (it != zipMem.end())
+                {
+                    refMem.push_back(it->second);
+                }
+            }
+
+            std::optional<ftk::Path> resolved;
+            if (!refMem.empty())
+            {
+                resolved = ftk::Path(path.get() + "/" + targetUrl);
+            }
+            else
+            {
+                resolved = resolveExternalReference(targetUrl, timelineDir);
+            }
+            if (resolved)
+            {
+                auto mediaReference = std::make_shared<MediaReference>();
+                auto range = otioExternalRef->available_range();
+                if (range.has_value())
+                {
+                    mediaReference->availableRangeStart = mediaTimeFromOTIO(range->start_time());
+                    mediaReference->availableRangeDuration = mediaDurationFromOTIO(range->duration());
+                }
+                clip->mediaReferences[name] = mediaReference;
+
+                const std::string key = resolved->get();
+                const auto it = seen.find(key);
+                if (it != seen.end())
+                {
+                    mediaReference->media = it->second;
+                }
+                else
+                {
+                    mediaReference->media = std::make_shared<Media>();
+                    mediaReference->media->path = *resolved;
+                    mediaReference->media->mem = std::move(refMem);
+                    seen[resolved->get()] = mediaReference->media;
+                }
+            }
+        }
 
         void Timeline::_init(
             const std::shared_ptr<ftk::Context>& context,
@@ -82,11 +170,12 @@ namespace tl
             p.path = path;
             p.startTime = ftk::Observable<Time>::create();
             p.duration = ftk::Observable<Duration>::create();
+            p.stack = std::make_shared<Stack>();
+            p.timelineDir = std::filesystem::path(path.get()).parent_path();
 
             // Read the timeline.
             OTIO_NS::SerializableObject::Retainer<OTIO_NS::Timeline> otioTimeline;
             OTIO_NS::ErrorStatus errorStatus;
-            std::map<std::string, ftk::MemFile> zipMem;
             if (".otioz" == ftk::toLower(path.getExt()))
             {
                 // Open the ZIP and parse content.otio.
@@ -128,7 +217,7 @@ namespace tl
 
                     if (auto dataOffset = zip.getStoredDataOffset(i, zipBase, zipSize))
                     {
-                        zipMem[s.m_filename] =
+                        p.zipMem[s.m_filename] =
                         {
                             zipBase + *dataOffset,
                             static_cast<size_t>(s.m_uncomp_size)
@@ -148,7 +237,6 @@ namespace tl
                 }
             }
 
-            p.stack = std::make_shared<Stack>();
             if (otioTimeline)
             {
                 p.rate = mediaDurationFromOTIO(otioTimeline->duration()).rate;
@@ -164,106 +252,11 @@ namespace tl
                 p.stack->duration = p.duration->get();
 
                 // Read the tracks.
-                const auto timelineDir = std::filesystem::path(path.get()).parent_path();
-                std::map<std::string, std::shared_ptr<Media>> seen;
                 for (const auto& otioTimelineChild : otioStack->children())
                 {
                     if (auto otioTrack = OTIO_NS::dynamic_retainer_cast<OTIO_NS::Track>(otioTimelineChild))
                     {
-                        auto track = std::make_shared<Track>();
-                        track->name = otioTrack->name();
-                        auto range = otioTrack->trimmed_range_in_parent();
-                        if (!range.has_value())
-                        {
-                            range = otioTrack->trimmed_range();
-                        }
-                        if (range.has_value())
-                        {
-                            track->startTime = timeFromOTIO(range->start_time(), p.rate.toDouble());
-                            track->duration = durationFromOTIO(range->duration(), p.rate.toDouble());
-                        }
-                        p.stack->children.push_back(track);
-
-                        // Read the clips.
-                        for (const auto& otioTrackChild : otioTrack->children())
-                        {
-                            if (auto otioClip = OTIO_NS::dynamic_retainer_cast<OTIO_NS::Clip>(otioTrackChild))
-                            {
-                                auto clip = std::make_shared<Clip>();
-                                clip->name = otioClip->name();
-                                range = otioClip->trimmed_range_in_parent();
-                                if (!range.has_value())
-                                {
-                                    range = otioClip->trimmed_range();
-                                }
-                                if (range.has_value())
-                                {
-                                    clip->startTime = timeFromOTIO(range->start_time(), p.rate.toDouble());
-                                    clip->duration = durationFromOTIO(range->duration(), p.rate.toDouble());
-                                }
-                                track->children.push_back(clip);
-
-                                // Read the media references.
-                                clip->activeMediaReference = otioClip->active_media_reference_key();
-                                for (const auto& refIt : otioClip->media_references())
-                                {
-                                    if (auto otioExternalRef =
-                                        dynamic_cast<OTIO_NS::ExternalReference*>(refIt.second))
-                                    {
-                                        const std::string targetUrl = otioExternalRef->target_url();
-
-                                        std::vector<ftk::MemFile> refMem;
-                                        if (!zipMem.empty())
-                                        {
-                                            auto it = zipMem.find(targetUrl);
-                                            if (it == zipMem.end())
-                                            {
-                                                it = zipMem.find("media/" + targetUrl);
-                                            }
-                                            if (it != zipMem.end())
-                                            {
-                                                refMem.push_back(it->second);
-                                            }
-                                        }
-
-                                        std::optional<ftk::Path> resolved;
-                                        if (!refMem.empty())
-                                        {
-                                            resolved = ftk::Path(path.get() + "/" + targetUrl);
-                                        }
-                                        else
-                                        {
-                                            resolved = resolveExternalReference(targetUrl, timelineDir);
-                                        }
-                                        if (resolved)
-                                        {
-                                            auto mediaReference = std::make_shared<MediaReference>();
-                                            range = refIt.second->available_range();
-                                            if (range.has_value())
-                                            {
-                                                mediaReference->availableRangeStart = mediaTimeFromOTIO(range->start_time());
-                                                mediaReference->availableRangeDuration = mediaDurationFromOTIO(range->duration());
-                                            }
-                                            clip->mediaReferences[refIt.first] = mediaReference;
-
-                                            const std::string key = resolved->get();
-                                            const auto it = seen.find(key);
-                                            if (it != seen.end())
-                                            {
-                                                mediaReference->media = it->second;
-                                            }
-                                            else
-                                            {
-                                                mediaReference->media = std::make_shared<Media>();
-                                                mediaReference->media->path = *resolved;
-                                                mediaReference->media->mem = std::move(refMem);
-                                                seen[resolved->get()] = mediaReference->media;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        p.readTrack(otioTrack);
                     }
                 }
             }

@@ -6,9 +6,6 @@
 #if defined(TL_IO_HAS_FFMPEG)
 #include "FFmpegRead.h"
 #endif // TL_IO_HAS_FFMPEG
-#if defined(TL_IO_HAS_EXR)
-#include "EXRRead.h"
-#endif // TL_IO_HAS_EXR
 #if defined(TL_IO_HAS_OIIO)
 #include "OIIORead.h"
 #endif // TL_IO_HAS_OIIO
@@ -33,9 +30,6 @@ namespace tl
         {
             FTK_P();
             auto logSystem = context->getLogSystem();
-#if defined(TL_IO_HAS_EXR)
-            //addPlugin(EXRReadPlugin::create(logSystem));
-#endif // TL_IO_HAS_EXR
 #if defined(TL_IO_HAS_OIIO)
             addPlugin(OIIOReadPlugin::create(logSystem));
 #endif // TL_IO_HAS_OIIO

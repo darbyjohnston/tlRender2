@@ -32,7 +32,15 @@ namespace tl
             const std::map<std::string, FileType>& getExts() const;
 
             //! Open a file for reading.
-            std::shared_ptr<IRead> read(const ftk::Path&, const ReadOptions& = {});
+            std::shared_ptr<IRead> read(
+                const ftk::Path&,
+                const ReadOptions& = {});
+
+            //! Open a file for reading.
+            std::shared_ptr<IRead> read(
+                const ftk::Path&,
+                const std::vector<ftk::MemFile>&,
+                const ReadOptions& = {});
         
         private:
             FTK_PRIVATE();

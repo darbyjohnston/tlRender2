@@ -11,10 +11,17 @@ target_sources(tlTimeline
         src/Timeline.cpp
         src/VideoGraph.cpp)
 
+target_compile_definitions(tlTimeline PRIVATE
+    MINIZ_NO_ZLIB_COMPATIBLE_NAMES)
+target_sources(tlTimeline
+    PRIVATE
+    ${PROJECT_SOURCE_DIR}/third_party/miniz/miniz.c)
+
 target_include_directories(tlTimeline
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/otio/src>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/miniz>
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)

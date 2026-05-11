@@ -3,9 +3,6 @@
 
 #include <tl/InfoApp/App.h>
 
-#include <tl/Timeline/Timeline.h>
-#include <tl/IO/IOSystem.h>
-
 #include <ftk/Core/Context.h>
 #include <ftk/Core/Format.h>
 
@@ -58,7 +55,7 @@ namespace tl
                 {
                     _printTimeline(readSystem, path);
                 }
-                else if (!_printMedia(readSystem, path))
+                else if (!_printMedia(readSystem, { path }))
                 {
                     _printError("Unknown file: " + input);
                 }
@@ -67,22 +64,23 @@ namespace tl
 
         bool App::_printMedia(
             const std::shared_ptr<io::ReadSystem>& readSystem,
-            ftk::Path path,
+            const timeline::Media& media,
             int indent)
         {
             const auto& exts = readSystem->getExts();
-            const auto i = exts.find(ftk::toLower(path.getExt()));
+            const auto i = exts.find(ftk::toLower(media.path.getExt()));
             if (i == exts.end())
             {
                 return false;
             }
+            ftk::Path path = media.path;
             if (io::FileType::Seq == i->second)
             {
                 path = ftk::expandSeq(path);
             }
             try
             {
-                auto read = readSystem->read(path);
+                auto read = readSystem->read(path, media.mem);
                 if (!read)
                 {
                     throw std::runtime_error("Unknown file: " + path.get());
@@ -149,14 +147,14 @@ namespace tl
                 auto timeline = timeline::Timeline::create(_context, path);
 
                 _print(path.get() + ":");
-                const auto& mediaPaths = timeline->getMediaPaths();
+                const auto& media = timeline->getMedia();
                 _print(ftk::Format("  references: {0}").
-                    arg(mediaPaths.size()));
-                for (const auto& mediaPath : mediaPaths)
+                    arg(media.size()));
+                for (const auto& i : media)
                 {
-                    if (!_printMedia(readSystem, mediaPath, 2))
+                    if (!_printMedia(readSystem, i, 2))
                     {
-                        _printError("Unknown file: " + mediaPath.get());
+                        _printError("Unknown file: " + i.path.get());
                     }
                 }
             }

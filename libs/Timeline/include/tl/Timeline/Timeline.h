@@ -10,11 +10,19 @@
 #include <ftk/Core/Context.h>
 #include <ftk/Core/Observable.h>
 #include <ftk/Core/Path.h>
+#include <ftk/Core/FileIO.h>
 
 namespace tl
 {
     namespace timeline
     {
+        //! Media.
+        struct Media
+        {
+            ftk::Path path;
+            std::vector<ftk::MemFile> mem;
+        };
+
         //! Timeline.
         class TL_API_TYPE Timeline : public std::enable_shared_from_this<Timeline>
         {
@@ -43,9 +51,9 @@ namespace tl
             //! the timeline was created empty.
             const ftk::Path& getPath() const;
 
-            //! Get the resolved media paths referenced by the timeline. Paths
-            //! are absolute, deduplicated, and the order is unspecified.
-            const std::vector<ftk::Path>& getMediaPaths() const;
+            //! Get the resolved media referenced by the timeline. Paths are
+            //! absolute, deduplicated, and the order is unspecified.
+            const std::vector<Media>& getMedia() const;
 
             //! Get the timeline start time.
             const core::Time& getStartTime() const;

@@ -12,6 +12,8 @@
 
 #include <filesystem>
 
+#include <miniz.h>
+
 namespace tl
 {
     using namespace core;
@@ -114,13 +116,94 @@ namespace tl
                 }
                 return ftk::Path(resolved.string());
             }
+
+            // ZIP reader using miniz.
+            class ZipReader
+            {
+            public:
+                ZipReader(std::string const& fileName) :
+                    _fileName(fileName)
+                {
+                    if (!mz_zip_reader_init_file(&_zip, fileName.c_str(), 0))
+                    {
+                        throw std::runtime_error(
+                            ftk::Format("Cannot open zip file: \"{0}\"").arg(fileName));
+                    }
+                }
+                
+                ~ZipReader()
+                {
+                    mz_zip_reader_end(&_zip);
+                }
+                
+                ZipReader(ZipReader const&) = delete;
+                ZipReader& operator=(ZipReader const&) = delete;
+                
+                mz_uint getFileCount() const
+                {
+                    return mz_zip_reader_get_num_files(const_cast<mz_zip_archive*>(&_zip));
+                }
+                
+                std::optional<mz_uint> find(std::string const& name)
+                {
+                    int idx = mz_zip_reader_locate_file(&_zip, name.c_str(), nullptr, 0);
+                    if (idx < 0) return std::nullopt;
+                    return static_cast<mz_uint>(idx);
+                }
+
+                mz_zip_archive_file_stat stat(mz_uint i)
+                {
+                    mz_zip_archive_file_stat s;
+                    if (!mz_zip_reader_file_stat(&_zip, i, &s))
+                    {
+                        throw std::runtime_error(
+                            ftk::Format("Cannot stat zip entry {0}: \"{1}\"").
+                                arg(i).
+                                arg(_fileName));
+                    }
+                    return s;
+                }
+
+                std::string readToString(mz_uint i)
+                {
+                    mz_zip_archive_file_stat s;
+                    if (!mz_zip_reader_file_stat(&_zip, i, &s))
+                    {
+                        throw std::runtime_error(
+                            ftk::Format("Cannot stat zip entry {0}: \"{1}\"").
+                                arg(i).
+                                arg(_fileName));
+                    }
+                    
+                    std::string out;
+                    out.resize(s.m_uncomp_size);
+                    if (!mz_zip_reader_extract_to_mem(
+                        &_zip,
+                        i,
+                        out.data(),
+                        out.size(),
+                        0))
+                    {
+                        throw std::runtime_error(
+                            ftk::Format("Cannot extract zip entry to memory \"{0}\": \"{1}\"").
+                                arg(s.m_filename).
+                                arg(_fileName));
+                    }
+                    return out;
+                }
+
+            private:
+                std::string _fileName;
+                mz_zip_archive _zip = {};
+            };
         }
 
         struct Timeline::Private
         {
             std::shared_ptr<ftk::Context> context;
             ftk::Path path;
-            std::vector<ftk::Path> mediaPaths;
+            std::shared_ptr<ftk::FileIO> fileIO;
+            std::vector<Media> media;
             std::shared_ptr<ftk::Observable<Time> > startTime;
             std::shared_ptr<ftk::Observable<Duration> > duration;
         };
@@ -135,39 +218,63 @@ namespace tl
             p.startTime = ftk::Observable<Time>::create();
             p.duration = ftk::Observable<Duration>::create();
 
-            if (path.get().empty())
+            OTIO_NS::SerializableObject::Retainer<OTIO_NS::Timeline> otioTimeline;
+            OTIO_NS::ErrorStatus errorStatus;
+            if (".otioz" == ftk::toLower(path.getExt()))
             {
-                return;
+                ZipReader zip(path.get());
+                auto id = zip.find("content.otio");
+                if (!id)
+                {
+                    throw std::runtime_error(ftk::Format("Cannot find \"content.otio\": {0}").
+                        arg(path.get()));
+                }
+                const std::string json = zip.readToString(*id);
+                otioTimeline = dynamic_cast<OTIO_NS::Timeline*>(
+                    OTIO_NS::Timeline::from_json_string(json, &errorStatus));
+                if (!otioTimeline || OTIO_NS::is_error(errorStatus))
+                {
+                    throw std::runtime_error(ftk::Format("Cannot read timeline \"{0}\": {1}").
+                        arg(path.get()).
+                        arg(errorStatus.full_description));
+                }
+
+                p.fileIO = ftk::FileIO::create(
+                    path.get(),
+                    ftk::FileMode::Read,
+                    ftk::FileRead::MMap);
+            }
+            else if (!path.get().empty())
+            {
+                otioTimeline = dynamic_cast<OTIO_NS::Timeline*>(
+                    OTIO_NS::Timeline::from_json_file(path.get(), &errorStatus));
+                if (!otioTimeline || OTIO_NS::is_error(errorStatus))
+                {
+                    throw std::runtime_error(ftk::Format("Cannot read timeline \"{0}\": {1}").
+                        arg(path.get()).
+                        arg(errorStatus.full_description));
+                }
             }
 
-            // Parse the OTIO file.
-            OTIO_NS::ErrorStatus errorStatus;
-            OTIO_NS::SerializableObject::Retainer<OTIO_NS::Timeline> otioTimeline(
-                dynamic_cast<OTIO_NS::Timeline*>(
-                    OTIO_NS::Timeline::from_json_file(path.get(), &errorStatus)));
-            if (!otioTimeline || OTIO_NS::is_error(errorStatus))
-            {
-                throw std::runtime_error(ftk::Format("Cannot read timeline \"{0}\": {1}").
-                    arg(path.get()).
-                    arg(errorStatus.full_description));
-            }
-            
             // Collect external media references.
-            const auto timelineDir = std::filesystem::path(path.get()).parent_path();
-            std::set<std::string> seen;
-            for (const auto& otioClip : otioTimeline->find_clips())
+            if (otioTimeline)
             {
-                if (auto otioExternalRef =
-                    dynamic_cast<OTIO_NS::ExternalReference*>(otioClip->media_reference()))
+                const auto timelineDir = std::filesystem::path(path.get()).parent_path();
+                std::set<std::string> seen;
+                for (const auto& otioClip : otioTimeline->find_clips())
                 {
-                    if (auto resolved = resolveExternalReference(
-                        otioExternalRef->target_url(),
-                        timelineDir))
+                    if (auto otioExternalRef =
+                        dynamic_cast<OTIO_NS::ExternalReference*>(otioClip->media_reference()))
                     {
-                        const std::string key = resolved->get();
-                        if (seen.insert(key).second)
+                        if (auto resolved = resolveExternalReference(
+                            otioExternalRef->target_url(),
+                            timelineDir))
                         {
-                            p.mediaPaths.push_back(*resolved);
+                            const std::string key = resolved->get();
+                            if (seen.insert(key).second)
+                            {
+                                p.media.push_back({ *resolved });
+                            }
                         }
                     }
                 }
@@ -203,9 +310,9 @@ namespace tl
             return _p->path;
         }
 
-        const std::vector<ftk::Path>& Timeline::getMediaPaths() const
+        const std::vector<Media>& Timeline::getMedia() const
         {
-            return _p->mediaPaths;
+            return _p->media;
         }
 
         const Time& Timeline::getStartTime() const

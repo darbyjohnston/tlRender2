@@ -79,5 +79,21 @@ namespace tl
             }
             return nullptr;
         }
+        
+        std::shared_ptr<IRead> ReadSystem::read(
+            const ftk::Path& path,
+            const std::vector<ftk::MemFile>& mem,
+            const ReadOptions& options)
+        {
+            FTK_P();
+            for (auto plugin : p.plugins)
+            {
+                if (plugin->canRead(path, options))
+                {
+                    return plugin->read(path, mem, options);
+                }
+            }
+            return nullptr;
+        }
     }
 }

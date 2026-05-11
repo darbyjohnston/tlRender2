@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <tl/Timeline/Timeline.h>
 #include <tl/IO/IOSystem.h>
 
 #include <ftk/Core/CmdLine.h>
@@ -47,7 +48,7 @@ namespace tl
             // isn't recognized by any plugin in the ReadSystem.
             bool _printMedia(
                 const std::shared_ptr<io::ReadSystem>&,
-                ftk::Path,
+                const timeline::Media&,
                 int indent = 0);
 
             // Open a timeline and print info for each of its media references.

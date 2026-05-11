@@ -121,7 +121,7 @@ namespace tl
             class ZipReader
             {
             public:
-                ZipReader(std::string const& fileName) :
+                ZipReader(const std::string& fileName) :
                     _fileName(fileName)
                 {
                     if (!mz_zip_reader_init_file(&_zip, fileName.c_str(), 0))
@@ -144,7 +144,7 @@ namespace tl
                     return mz_zip_reader_get_num_files(const_cast<mz_zip_archive*>(&_zip));
                 }
                 
-                std::optional<mz_uint> find(std::string const& name)
+                std::optional<mz_uint> find(const std::string& name)
                 {
                     int idx = mz_zip_reader_locate_file(&_zip, name.c_str(), nullptr, 0);
                     if (idx < 0) return std::nullopt;
@@ -192,6 +192,52 @@ namespace tl
                     return out;
                 }
 
+                // For a stored (uncompressed) entry, compute the offset
+                // within the archive where the entry's raw data begins.
+                // Returns nullopt if the entry is compressed (method != 0).
+                //
+                // The data offset is computed from the local file header:
+                //   local_header_offset + 30 + filename_length + extra_length
+                // The local header's filename and extra-field lengths can
+                // differ from the central directory's lengths, so we have to
+                // peek at the local header itself rather than using stat alone.
+                std::optional<size_t> getStoredDataOffset(
+                    mz_uint i,
+                    const uint8_t* archiveBase,
+                    size_t archiveSize)
+                {
+                    const auto s = stat(i);
+                    if (s.m_method != 0)
+                    {
+                        return std::nullopt;
+                    }
+                    // 30 bytes minimum for the local file header.
+                    if (s.m_local_header_ofs + 30 > archiveSize)
+                    {
+                        return std::nullopt;
+                    }
+                    const uint8_t* hdr = archiveBase + s.m_local_header_ofs;
+                    // Verify the local file header signature 0x04034b50.
+                    if (hdr[0] != 0x50 || hdr[1] != 0x4b ||
+                        hdr[2] != 0x03 || hdr[3] != 0x04)
+                    {
+                        return std::nullopt;
+                    }
+                    const uint16_t nameLen =
+                        static_cast<uint16_t>(hdr[26]) |
+                        (static_cast<uint16_t>(hdr[27]) << 8);
+                    const uint16_t extraLen =
+                        static_cast<uint16_t>(hdr[28]) |
+                        (static_cast<uint16_t>(hdr[29]) << 8);
+                    const size_t dataOffset =
+                        s.m_local_header_ofs + 30u + nameLen + extraLen;
+                    if (dataOffset + s.m_uncomp_size > archiveSize)
+                    {
+                        return std::nullopt;
+                    }
+                    return dataOffset;
+                }
+
             private:
                 std::string _fileName;
                 mz_zip_archive _zip = {};
@@ -220,8 +266,11 @@ namespace tl
 
             OTIO_NS::SerializableObject::Retainer<OTIO_NS::Timeline> otioTimeline;
             OTIO_NS::ErrorStatus errorStatus;
+            std::map<std::string, ftk::MemFile> zipMem;
+
             if (".otioz" == ftk::toLower(path.getExt()))
             {
+                // Open the ZIP and parse content.otio.
                 ZipReader zip(path.get());
                 auto id = zip.find("content.otio");
                 if (!id)
@@ -238,11 +287,35 @@ namespace tl
                         arg(path.get()).
                         arg(errorStatus.full_description));
                 }
-
+                
+                // Memory-map the ZIP.
                 p.fileIO = ftk::FileIO::create(
                     path.get(),
                     ftk::FileMode::Read,
                     ftk::FileRead::MMap);
+                
+                // Walk every entry under "media/" and record the byte range
+                // for each one that's stored uncompressed.
+                const uint8_t* zipBase = p.fileIO->getMemP();
+                const size_t zipSize = p.fileIO->getSize();
+                const mz_uint fileCount = zip.getFileCount();
+                for (mz_uint i = 0; i < fileCount; ++i)
+                {
+                    const auto s = zip.stat(i);
+
+                    // Skip directories and non-media entries.
+                    if (s.m_is_directory) continue;
+                    if (std::strncmp(s.m_filename, "media/", 6) != 0) continue;
+
+                    if (auto dataOffset = zip.getStoredDataOffset(i, zipBase, zipSize))
+                    {
+                        zipMem[s.m_filename] =
+                        {
+                            zipBase + *dataOffset,
+                            static_cast<size_t>(s.m_uncomp_size)
+                        };
+                    }
+                }
             }
             else if (!path.get().empty())
             {
@@ -266,14 +339,37 @@ namespace tl
                     if (auto otioExternalRef =
                         dynamic_cast<OTIO_NS::ExternalReference*>(otioClip->media_reference()))
                     {
-                        if (auto resolved = resolveExternalReference(
-                            otioExternalRef->target_url(),
-                            timelineDir))
+                        const std::string targetUrl = otioExternalRef->target_url();
+
+                        std::vector<ftk::MemFile> refMem;
+                        if (!zipMem.empty())
+                        {
+                            auto it = zipMem.find(targetUrl);
+                            if (it == zipMem.end())
+                            {
+                                it = zipMem.find("media/" + targetUrl);
+                            }
+                            if (it != zipMem.end())
+                            {
+                                refMem.push_back(it->second);
+                            }
+                        }
+
+                        std::optional<ftk::Path> resolved;
+                        if (!refMem.empty())
+                        {
+                            resolved = ftk::Path(path.get() + "/" + targetUrl);
+                        }
+                        else
+                        {
+                            resolved = resolveExternalReference(targetUrl, timelineDir);
+                        }
+                        if (resolved)
                         {
                             const std::string key = resolved->get();
                             if (seen.insert(key).second)
                             {
-                                p.media.push_back({ *resolved });
+                                p.media.push_back({ *resolved, std::move(refMem) });
                             }
                         }
                     }

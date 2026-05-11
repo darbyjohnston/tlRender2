@@ -12,7 +12,8 @@ target_sources(tlTimeline
         src/VideoGraph.cpp)
 
 target_compile_definitions(tlTimeline PRIVATE
-    MINIZ_NO_ZLIB_COMPATIBLE_NAMES)
+    MINIZ_NO_ZLIB_COMPATIBLE_NAMES
+    MINIZ_NO_ARCHIVE_WRITING_APIS)
 target_sources(tlTimeline
     PRIVATE
     ${PROJECT_SOURCE_DIR}/third_party/miniz/miniz.c)

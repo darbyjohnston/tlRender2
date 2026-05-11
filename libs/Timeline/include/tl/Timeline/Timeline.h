@@ -23,6 +23,34 @@ namespace tl
             std::vector<ftk::MemFile> mem;
         };
 
+        //! Base class for items in the timeline.
+        struct IItem : public std::enable_shared_from_this<IItem>
+        {
+            virtual ~IItem() = 0;
+
+            std::string name;
+            core::Time startTime;
+            core::Duration duration;
+        };
+
+        //! Clip.
+        struct Clip : public IItem
+        {
+            std::vector<std::shared_ptr<Media>> media;
+        };
+
+        //! Track.
+        struct Track : public IItem
+        {
+            std::vector<std::shared_ptr<IItem>> children;
+        };
+
+        //! Stack.
+        struct Stack : public IItem
+        {
+            std::vector<std::shared_ptr<IItem>> children;
+        };
+
         //! Timeline.
         class TL_API_TYPE Timeline : public std::enable_shared_from_this<Timeline>
         {
@@ -50,10 +78,9 @@ namespace tl
             //! Get the path the timeline was loaded from, or an empty path if
             //! the timeline was created empty.
             const ftk::Path& getPath() const;
-
-            //! Get the resolved media referenced by the timeline. Paths are
-            //! absolute, deduplicated, and the order is unspecified.
-            const std::vector<Media>& getMedia() const;
+            
+            //! Get the timeline rate.
+            const core::MediaRate& getRate() const;
 
             //! Get the timeline start time.
             const core::Time& getStartTime() const;
@@ -66,6 +93,9 @@ namespace tl
 
             //! Observe the timeline duration.
             std::shared_ptr<ftk::IObservable<core::Duration> > observeDuration() const;
+
+            //! Get the timeline stack.
+            const std::shared_ptr<Stack>& getStack() const;
 
             //! Get video for the given time.
             std::shared_ptr<IVideoNode> getVideo(const core::Time&);

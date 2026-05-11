@@ -82,48 +82,54 @@ namespace tl
                 }
                 const auto info = read->getInfo();
 
-                const std::string prefix(indent, ' ');
-                _print(prefix + media.path.get() + ":");
+                _printIndented(media.path.get() + ":", indent);
                 for (size_t i = 0; i < info.video.size(); ++i)
                 {
                     const auto& video = info.video[i];
-                    _print(prefix + ftk::Format("  video {0}:").arg(i).str());
-                    _print(prefix + ftk::Format("    size: {0}x{1}").
+                    _printIndented(ftk::Format("  video {0}:").arg(i), indent);
+                    _printIndented(ftk::Format("    size: {0}x{1}").
                         arg(video.size.w).
-                        arg(video.size.h).str());
+                        arg(video.size.h),
+                        indent);
                 }
                 if (!info.video.empty())
                 {
                     if (info.videoStart)
                     {
-                        _print(prefix + ftk::Format("  video start: {0}").
-                            arg(core::to_string(*info.videoStart)).str());
+                        _printIndented(ftk::Format("  video start: {0}").
+                            arg(core::to_string(*info.videoStart)),
+                            indent);
                     }
-                    _print(prefix + ftk::Format("  video duration: {0}").
-                        arg(core::to_string(info.videoDuration)).str());
+                    _printIndented(ftk::Format("  video duration: {0}").
+                        arg(core::to_string(info.videoDuration)),
+                        indent);
                 }
                 for (size_t i = 0; i < info.audio.size(); ++i)
                 {
                     const auto& audio = info.audio[i];
-                    _print(prefix + ftk::Format("  audio {0}:").arg(i).str());
-                    _print(prefix + ftk::Format("    channels: {0}").
-                        arg(audio.channelCount).str());
+                    _printIndented(ftk::Format("  audio {0}:").arg(i), indent);
+                    _printIndented(ftk::Format("    channels: {0}").
+                        arg(audio.channelCount),
+                        indent);
                 }
                 if (!info.audio.empty())
                 {
                     if (info.audioStart)
                     {
-                        _print(prefix + ftk::Format("  audio start: {0}").
-                            arg(core::to_string(*info.audioStart)).str());
+                        _printIndented(ftk::Format("  audio start: {0}").
+                            arg(core::to_string(*info.audioStart)),
+                            indent);
                     }
-                    _print(prefix + ftk::Format("  audio duration: {0}").
-                        arg(core::to_string(info.audioDuration)).str());
+                    _printIndented(ftk::Format("  audio duration: {0}").
+                        arg(core::to_string(info.audioDuration)),
+                        indent);
                 }
                 for (const auto& tag : info.tags)
                 {
-                    _print(prefix + ftk::Format("  tag \"{0}\": \"{1}\"").
+                    _printIndented(ftk::Format("  tag \"{0}\": \"{1}\"").
                         arg(tag.first).
-                        arg(tag.second).str());
+                        arg(tag.second),
+                        indent);
                 }
             }
             catch (const std::exception& e)
@@ -141,15 +147,36 @@ namespace tl
             {
                 auto timeline = timeline::Timeline::create(_context, path);
 
-                _print(path.get() + ":");
-                const auto& media = timeline->getMedia();
-                _print(ftk::Format("  references: {0}").
-                    arg(media.size()));
-                for (const auto& i : media)
+                int indent = 0;
+                _printIndented(path.get() + ":", indent);
+                indent += 2;
+
+                auto stack = timeline->getStack();
+                _printIndented(ftk::Format("stack \"{0}\":").arg(stack->name), indent);
+                indent += 2;
+                for (const auto& stackChild : stack->children)
                 {
-                    if (!_printMedia(readSystem, i, 2))
+                    if (auto track = std::dynamic_pointer_cast<timeline::Track>(stackChild))
                     {
-                        _printError("Unknown file: " + i.path.get());
+                        _printIndented(ftk::Format("track \"{0}\":").arg(track->name), indent);
+                        indent += 2;
+                        for (const auto& trackChild : track->children)
+                        {
+                            if (auto clip = std::dynamic_pointer_cast<timeline::Clip>(trackChild))
+                            {
+                                _printIndented(ftk::Format("clip \"{0}\":").arg(clip->name), indent);
+                                indent += 2;
+                                for (const auto& media : clip->media)
+                                {
+                                    if (!_printMedia(readSystem, *media, indent))
+                                    {
+                                        _printError("Unknown file: " + media->path.get());
+                                    }
+                                }
+                                indent -= 2;
+                            }
+                        }
+                        indent -= 2;
                     }
                 }
             }
@@ -157,6 +184,11 @@ namespace tl
             {
                 _printError(e.what());
             }
+        }
+
+        void App::_printIndented(const std::string& s, int indent)
+        {
+            _print(std::string(indent, ' ') + s);
         }
     }
 }

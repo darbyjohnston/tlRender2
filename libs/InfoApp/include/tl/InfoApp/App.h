@@ -56,6 +56,8 @@ namespace tl
                 const std::shared_ptr<io::ReadSystem>&,
                 const ftk::Path&);
 
+            void _printIndented(const std::string&, int indent);
+
             CmdLine _cmdLine;
         };
     }

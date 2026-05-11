@@ -3,6 +3,9 @@
 
 #include <tl/Timeline/Timeline.h>
 
+#include "TimeUtil.h"
+#include "ZipUtil.h"
+
 #include <ftk/Core/Format.h>
 
 #include <opentimelineio/clip.h>
@@ -12,8 +15,6 @@
 
 #include <filesystem>
 
-#include <miniz.h>
-
 namespace tl
 {
     using namespace core;
@@ -22,66 +23,6 @@ namespace tl
     {
         namespace
         {
-            Time timeFromOTIO(const OTIO_NS::RationalTime& rt, double projectRate)
-            {
-                return { static_cast<int64_t>(rt.rescaled_to(projectRate).value()) };
-            }
-
-            Duration durationFromOTIO(const OTIO_NS::RationalTime& rt, double projectRate)
-            {
-                return { static_cast<int64_t>(rt.rescaled_to(projectRate).value()) };
-            }
-
-            OTIO_NS::RationalTime timeToOTIO(Time t, double projectRate)
-            {
-                return OTIO_NS::RationalTime(
-                    static_cast<double>(t.frames),
-                    projectRate);
-            }
-
-            OTIO_NS::RationalTime durationToOTIO(Duration d, double projectRate)
-            {
-                return OTIO_NS::RationalTime(
-                    static_cast<double>(d.frames),
-                    projectRate);
-            }
-
-            MediaTime mediaTimeFromOTIO(const OTIO_NS::RationalTime& rt)
-            {
-                // OTIO stores rate as a single double; recovering an exact
-                // integer num/den isn't always possible. We special-case the
-                // common NTSC-family rates that lose precision in double form
-                // and otherwise fall back to (round(rate), 1), which is exact
-                // for integer-valued rates (24, 25, 30, 48000, 44100, etc.)
-                // but lossy for unusual rationals not in the table below.
-                const double rate = rt.rate();
-                MediaRate r{ static_cast<int>(std::nearbyint(rate)), 1 };
-                if      (std::abs(rate - 24000.0 / 1001.0) < 1e-6) r = mediaRate23_976();
-                else if (std::abs(rate - 30000.0 / 1001.0) < 1e-6) r = mediaRate29_97();
-                else if (std::abs(rate - 60000.0 / 1001.0) < 1e-6) r = mediaRate59_94();
-                return MediaTime{ static_cast<int64_t>(rt.value()), r };
-            }
-
-            MediaDuration mediaDurationFromOTIO(const OTIO_NS::RationalTime& rt)
-            {
-                const auto t = mediaTimeFromOTIO(rt);
-                return MediaDuration{ t.frames, t.rate };
-            }
-
-            OTIO_NS::RationalTime mediaTimeToOTIO(const MediaTime& t)
-            {
-                return OTIO_NS::RationalTime(
-                    static_cast<double>(t.frames),
-                    t.rate.toDouble());
-            }
-
-            OTIO_NS::RationalTime mediaDurationToOTIO(const MediaDuration& d)
-            {
-                return OTIO_NS::RationalTime(
-                    static_cast<double>(d.frames),
-                    d.rate.toDouble());
-            }
-
             // Resolve an ExternalReference's target_url relative to the
             // timeline file's directory. Handles absolute paths, relative
             // paths, and the file:// URL scheme. URL-encoded characters are
@@ -116,142 +57,20 @@ namespace tl
                 }
                 return ftk::Path(resolved.string());
             }
-
-            // ZIP reader using miniz.
-            class ZipReader
-            {
-            public:
-                ZipReader(const std::string& fileName) :
-                    _fileName(fileName)
-                {
-                    if (!mz_zip_reader_init_file(&_zip, fileName.c_str(), 0))
-                    {
-                        throw std::runtime_error(
-                            ftk::Format("Cannot open zip file: \"{0}\"").arg(fileName));
-                    }
-                }
-                
-                ~ZipReader()
-                {
-                    mz_zip_reader_end(&_zip);
-                }
-                
-                ZipReader(ZipReader const&) = delete;
-                ZipReader& operator=(ZipReader const&) = delete;
-                
-                mz_uint getFileCount() const
-                {
-                    return mz_zip_reader_get_num_files(const_cast<mz_zip_archive*>(&_zip));
-                }
-                
-                std::optional<mz_uint> find(const std::string& name)
-                {
-                    int idx = mz_zip_reader_locate_file(&_zip, name.c_str(), nullptr, 0);
-                    if (idx < 0) return std::nullopt;
-                    return static_cast<mz_uint>(idx);
-                }
-
-                mz_zip_archive_file_stat stat(mz_uint i)
-                {
-                    mz_zip_archive_file_stat s;
-                    if (!mz_zip_reader_file_stat(&_zip, i, &s))
-                    {
-                        throw std::runtime_error(
-                            ftk::Format("Cannot stat zip entry {0}: \"{1}\"").
-                                arg(i).
-                                arg(_fileName));
-                    }
-                    return s;
-                }
-
-                std::string readToString(mz_uint i)
-                {
-                    mz_zip_archive_file_stat s;
-                    if (!mz_zip_reader_file_stat(&_zip, i, &s))
-                    {
-                        throw std::runtime_error(
-                            ftk::Format("Cannot stat zip entry {0}: \"{1}\"").
-                                arg(i).
-                                arg(_fileName));
-                    }
-                    
-                    std::string out;
-                    out.resize(s.m_uncomp_size);
-                    if (!mz_zip_reader_extract_to_mem(
-                        &_zip,
-                        i,
-                        out.data(),
-                        out.size(),
-                        0))
-                    {
-                        throw std::runtime_error(
-                            ftk::Format("Cannot extract zip entry to memory \"{0}\": \"{1}\"").
-                                arg(s.m_filename).
-                                arg(_fileName));
-                    }
-                    return out;
-                }
-
-                // For a stored (uncompressed) entry, compute the offset
-                // within the archive where the entry's raw data begins.
-                // Returns nullopt if the entry is compressed (method != 0).
-                //
-                // The data offset is computed from the local file header:
-                //   local_header_offset + 30 + filename_length + extra_length
-                // The local header's filename and extra-field lengths can
-                // differ from the central directory's lengths, so we have to
-                // peek at the local header itself rather than using stat alone.
-                std::optional<size_t> getStoredDataOffset(
-                    mz_uint i,
-                    const uint8_t* archiveBase,
-                    size_t archiveSize)
-                {
-                    const auto s = stat(i);
-                    if (s.m_method != 0)
-                    {
-                        return std::nullopt;
-                    }
-                    // 30 bytes minimum for the local file header.
-                    if (s.m_local_header_ofs + 30 > archiveSize)
-                    {
-                        return std::nullopt;
-                    }
-                    const uint8_t* hdr = archiveBase + s.m_local_header_ofs;
-                    // Verify the local file header signature 0x04034b50.
-                    if (hdr[0] != 0x50 || hdr[1] != 0x4b ||
-                        hdr[2] != 0x03 || hdr[3] != 0x04)
-                    {
-                        return std::nullopt;
-                    }
-                    const uint16_t nameLen =
-                        static_cast<uint16_t>(hdr[26]) |
-                        (static_cast<uint16_t>(hdr[27]) << 8);
-                    const uint16_t extraLen =
-                        static_cast<uint16_t>(hdr[28]) |
-                        (static_cast<uint16_t>(hdr[29]) << 8);
-                    const size_t dataOffset =
-                        s.m_local_header_ofs + 30u + nameLen + extraLen;
-                    if (dataOffset + s.m_uncomp_size > archiveSize)
-                    {
-                        return std::nullopt;
-                    }
-                    return dataOffset;
-                }
-
-            private:
-                std::string _fileName;
-                mz_zip_archive _zip = {};
-            };
         }
+
+        IItem::~IItem()
+        {}
 
         struct Timeline::Private
         {
             std::shared_ptr<ftk::Context> context;
             ftk::Path path;
             std::shared_ptr<ftk::FileIO> fileIO;
-            std::vector<Media> media;
+            MediaRate rate;
             std::shared_ptr<ftk::Observable<Time> > startTime;
             std::shared_ptr<ftk::Observable<Duration> > duration;
+            std::shared_ptr<Stack> stack;
         };
 
         void Timeline::_init(
@@ -264,10 +83,10 @@ namespace tl
             p.startTime = ftk::Observable<Time>::create();
             p.duration = ftk::Observable<Duration>::create();
 
+            // Read the timeline.
             OTIO_NS::SerializableObject::Retainer<OTIO_NS::Timeline> otioTimeline;
             OTIO_NS::ErrorStatus errorStatus;
             std::map<std::string, ftk::MemFile> zipMem;
-
             if (".otioz" == ftk::toLower(path.getExt()))
             {
                 // Open the ZIP and parse content.otio.
@@ -329,47 +148,92 @@ namespace tl
                 }
             }
 
-            // Collect external media references.
+            p.stack = std::make_shared<Stack>();
             if (otioTimeline)
             {
+                p.rate = mediaDurationFromOTIO(otioTimeline->duration()).rate;
+                p.startTime->setIfChanged(otioTimeline->global_start_time().has_value() ?
+                    timeFromOTIO(otioTimeline->global_start_time().value(), p.rate.toDouble()) :
+                    Time());
+                p.duration->setIfChanged(
+                    durationFromOTIO(otioTimeline->duration(), p.rate.toDouble()));
+
+                auto otioStack = otioTimeline->tracks();
+                p.stack->name = otioStack->name();
+                p.stack->startTime = timeFromOTIO(otioStack->trimmed_range().start_time(), p.rate.toDouble());
+                p.stack->duration = durationFromOTIO(otioStack->trimmed_range().duration(), p.rate.toDouble());
+
+                // Read the tracks.
                 const auto timelineDir = std::filesystem::path(path.get()).parent_path();
-                std::set<std::string> seen;
-                for (const auto& otioClip : otioTimeline->find_clips())
+                std::map<std::string, std::shared_ptr<Media>> seen;
+                for (const auto& otioTimelineChild : otioStack->children())
                 {
-                    if (auto otioExternalRef =
-                        dynamic_cast<OTIO_NS::ExternalReference*>(otioClip->media_reference()))
+                    if (auto otioTrack = OTIO_NS::dynamic_retainer_cast<OTIO_NS::Track>(otioTimelineChild))
                     {
-                        const std::string targetUrl = otioExternalRef->target_url();
+                        auto track = std::make_shared<Track>();
+                        track->name = otioTrack->name();
+                        track->startTime = timeFromOTIO(otioTrack->trimmed_range().start_time(), p.rate.toDouble());
+                        track->duration = durationFromOTIO(otioTrack->trimmed_range().duration(), p.rate.toDouble());
+                        p.stack->children.push_back(track);
 
-                        std::vector<ftk::MemFile> refMem;
-                        if (!zipMem.empty())
+                        // Read the clips.
+                        for (const auto& otioTrackChild : otioTrack->children())
                         {
-                            auto it = zipMem.find(targetUrl);
-                            if (it == zipMem.end())
+                            if (auto otioClip = OTIO_NS::dynamic_retainer_cast<OTIO_NS::Clip>(otioTrackChild))
                             {
-                                it = zipMem.find("media/" + targetUrl);
-                            }
-                            if (it != zipMem.end())
-                            {
-                                refMem.push_back(it->second);
-                            }
-                        }
+                                auto clip = std::make_shared<Clip>();
+                                clip->name = otioClip->name();
+                                clip->startTime = timeFromOTIO(otioClip->trimmed_range().start_time(), p.rate.toDouble());
+                                clip->duration = durationFromOTIO(otioClip->trimmed_range().duration(), p.rate.toDouble());
+                                track->children.push_back(clip);
 
-                        std::optional<ftk::Path> resolved;
-                        if (!refMem.empty())
-                        {
-                            resolved = ftk::Path(path.get() + "/" + targetUrl);
-                        }
-                        else
-                        {
-                            resolved = resolveExternalReference(targetUrl, timelineDir);
-                        }
-                        if (resolved)
-                        {
-                            const std::string key = resolved->get();
-                            if (seen.insert(key).second)
-                            {
-                                p.media.push_back({ *resolved, std::move(refMem) });
+                                // Read the media references.
+                                if (auto otioExternalRef =
+                                    dynamic_cast<OTIO_NS::ExternalReference*>(otioClip->media_reference()))
+                                {
+                                    const std::string targetUrl = otioExternalRef->target_url();
+
+                                    std::vector<ftk::MemFile> refMem;
+                                    if (!zipMem.empty())
+                                    {
+                                        auto it = zipMem.find(targetUrl);
+                                        if (it == zipMem.end())
+                                        {
+                                            it = zipMem.find("media/" + targetUrl);
+                                        }
+                                        if (it != zipMem.end())
+                                        {
+                                            refMem.push_back(it->second);
+                                        }
+                                    }
+
+                                    std::optional<ftk::Path> resolved;
+                                    if (!refMem.empty())
+                                    {
+                                        resolved = ftk::Path(path.get() + "/" + targetUrl);
+                                    }
+                                    else
+                                    {
+                                        resolved = resolveExternalReference(targetUrl, timelineDir);
+                                    }
+                                    if (resolved)
+                                    {
+                                        const std::string key = resolved->get();
+                                        const auto it = seen.find(key);
+                                        if (it != seen.end())
+                                        {
+                                            clip->media.push_back(it->second);
+                                        }
+                                        else
+                                        {
+                                            auto media = std::make_shared<Media>();
+                                            media->path = *resolved;
+                                            media->mem = std::move(refMem);
+                                            clip->media.push_back(media);
+                                            seen[resolved->get()] = media;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -406,9 +270,9 @@ namespace tl
             return _p->path;
         }
 
-        const std::vector<Media>& Timeline::getMedia() const
+        const std::shared_ptr<Stack>& Timeline::getStack() const
         {
-            return _p->media;
+            return _p->stack;
         }
 
         const Time& Timeline::getStartTime() const

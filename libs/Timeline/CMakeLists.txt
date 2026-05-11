@@ -7,9 +7,14 @@ target_sources(tlTimeline
         include/tl/Timeline/Timeline.h
         include/tl/Timeline/VideoGraph.h
         src/Init.cpp
+        src/Init.cpp
         src/Player.cpp
         src/Timeline.cpp
-        src/VideoGraph.cpp)
+        src/TimeUtil.cpp
+        src/TimeUtil.h
+        src/VideoGraph.cpp
+        src/ZipUtil.cpp
+        src/ZipUtil.h)
 
 target_compile_definitions(tlTimeline PRIVATE
     MINIZ_NO_ZLIB_COMPATIBLE_NAMES

@@ -173,6 +173,10 @@ namespace tl
                         auto track = std::make_shared<Track>();
                         track->name = otioTrack->name();
                         auto range = otioTrack->trimmed_range_in_parent();
+                        if (!range.has_value())
+                        {
+                            range = otioTrack->trimmed_range();
+                        }
                         if (range.has_value())
                         {
                             track->startTime = timeFromOTIO(range->start_time(), p.rate.toDouble());
@@ -188,6 +192,10 @@ namespace tl
                                 auto clip = std::make_shared<Clip>();
                                 clip->name = otioClip->name();
                                 range = otioClip->trimmed_range_in_parent();
+                                if (!range.has_value())
+                                {
+                                    range = otioClip->trimmed_range();
+                                }
                                 if (range.has_value())
                                 {
                                     clip->startTime = timeFromOTIO(range->start_time(), p.rate.toDouble());
@@ -196,49 +204,60 @@ namespace tl
                                 track->children.push_back(clip);
 
                                 // Read the media references.
-                                if (auto otioExternalRef =
-                                    dynamic_cast<OTIO_NS::ExternalReference*>(otioClip->media_reference()))
+                                for (const auto& refIt : otioClip->media_references())
                                 {
-                                    const std::string targetUrl = otioExternalRef->target_url();
+                                    if (auto otioExternalRef =
+                                        dynamic_cast<OTIO_NS::ExternalReference*>(refIt.second))
+                                    {
+                                        const std::string targetUrl = otioExternalRef->target_url();
 
-                                    std::vector<ftk::MemFile> refMem;
-                                    if (!zipMem.empty())
-                                    {
-                                        auto it = zipMem.find(targetUrl);
-                                        if (it == zipMem.end())
+                                        std::vector<ftk::MemFile> refMem;
+                                        if (!zipMem.empty())
                                         {
-                                            it = zipMem.find("media/" + targetUrl);
+                                            auto it = zipMem.find(targetUrl);
+                                            if (it == zipMem.end())
+                                            {
+                                                it = zipMem.find("media/" + targetUrl);
+                                            }
+                                            if (it != zipMem.end())
+                                            {
+                                                refMem.push_back(it->second);
+                                            }
                                         }
-                                        if (it != zipMem.end())
-                                        {
-                                            refMem.push_back(it->second);
-                                        }
-                                    }
 
-                                    std::optional<ftk::Path> resolved;
-                                    if (!refMem.empty())
-                                    {
-                                        resolved = ftk::Path(path.get() + "/" + targetUrl);
-                                    }
-                                    else
-                                    {
-                                        resolved = resolveExternalReference(targetUrl, timelineDir);
-                                    }
-                                    if (resolved)
-                                    {
-                                        const std::string key = resolved->get();
-                                        const auto it = seen.find(key);
-                                        if (it != seen.end())
+                                        std::optional<ftk::Path> resolved;
+                                        if (!refMem.empty())
                                         {
-                                            clip->media.push_back(it->second);
+                                            resolved = ftk::Path(path.get() + "/" + targetUrl);
                                         }
                                         else
                                         {
-                                            auto media = std::make_shared<Media>();
-                                            media->path = *resolved;
-                                            media->mem = std::move(refMem);
-                                            clip->media.push_back(media);
-                                            seen[resolved->get()] = media;
+                                            resolved = resolveExternalReference(targetUrl, timelineDir);
+                                        }
+                                        if (resolved)
+                                        {
+                                            auto mediaReference = std::make_shared<MediaReference>();
+                                            range = refIt.second->available_range();
+                                            if (range.has_value())
+                                            {
+                                                mediaReference->availableRangeStart = mediaTimeFromOTIO(range->start_time());
+                                                mediaReference->availableRangeDuration = mediaDurationFromOTIO(range->duration());
+                                            }
+                                            clip->mediaReferences[refIt.first] = mediaReference;
+
+                                            const std::string key = resolved->get();
+                                            const auto it = seen.find(key);
+                                            if (it != seen.end())
+                                            {
+                                                mediaReference->media = it->second;
+                                            }
+                                            else
+                                            {
+                                                mediaReference->media = std::make_shared<Media>();
+                                                mediaReference->media->path = *resolved;
+                                                mediaReference->media->mem = std::move(refMem);
+                                                seen[resolved->get()] = mediaReference->media;
+                                            }
                                         }
                                     }
                                 }

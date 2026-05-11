@@ -193,12 +193,29 @@ namespace tl
                                     indent);
                                 indent += 2;
 
-                                for (const auto& media : clip->media)
+                                for (const auto& mediaRef : clip->mediaReferences)
                                 {
-                                    if (!_printMedia(readSystem, *media, indent))
+                                    _printIndented(ftk::Format("media reference \"{0}\":").
+                                        arg(mediaRef.first),
+                                        indent);
+                                    indent += 2;
+                                    if (mediaRef.second->availableRangeStart.has_value())
                                     {
-                                        _printError("Unknown file: " + media->path.get());
+                                        _printIndented(ftk::Format("start time: {0}").
+                                            arg(core::to_string(mediaRef.second->availableRangeStart.value())),
+                                            indent);
                                     }
+                                    if (mediaRef.second->availableRangeDuration.has_value())
+                                    {
+                                        _printIndented(ftk::Format("duration: {0}").
+                                            arg(core::to_string(mediaRef.second->availableRangeDuration.value())),
+                                            indent);
+                                    }
+                                    if (!_printMedia(readSystem, *mediaRef.second->media, indent))
+                                    {
+                                        _printError("Unknown file: " + mediaRef.second->media->path.get());
+                                    }
+                                    indent -= 2;
                                 }
                                 indent -= 2;
                             }

@@ -23,6 +23,14 @@ namespace tl
             std::vector<ftk::MemFile> mem;
         };
 
+        //! Media reference.
+        struct MediaReference
+        {
+            std::shared_ptr<Media> media;
+            std::optional<core::MediaTime> availableRangeStart;
+            std::optional<core::MediaDuration> availableRangeDuration;
+        };
+
         //! Base class for items in the timeline.
         struct IItem : public std::enable_shared_from_this<IItem>
         {
@@ -36,7 +44,8 @@ namespace tl
         //! Clip.
         struct Clip : public IItem
         {
-            std::vector<std::shared_ptr<Media>> media;
+            std::map<std::string, std::shared_ptr<MediaReference>> mediaReferences;
+            std::string activeMediaReference;
         };
 
         //! Track.

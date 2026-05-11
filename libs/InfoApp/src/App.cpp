@@ -73,22 +73,17 @@ namespace tl
             {
                 return false;
             }
-            ftk::Path path = media.path;
-            if (io::FileType::Seq == i->second)
-            {
-                path = ftk::expandSeq(path);
-            }
             try
             {
-                auto read = readSystem->read(path, media.mem);
+                auto read = readSystem->read(media.path, media.mem);
                 if (!read)
                 {
-                    throw std::runtime_error("Unknown file: " + path.get());
+                    throw std::runtime_error("Unknown file: " + media.path.get());
                 }
                 const auto info = read->getInfo();
 
                 const std::string prefix(indent, ' ');
-                _print(prefix + path.get() + ":");
+                _print(prefix + media.path.get() + ":");
                 for (size_t i = 0; i < info.video.size(); ++i)
                 {
                     const auto& video = info.video[i];

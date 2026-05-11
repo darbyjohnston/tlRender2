@@ -161,11 +161,15 @@ namespace tl
                 imageInfo.layout.mirror.y = true;
                 out.video.push_back(imageInfo);
             }
-            if (_path.getFrames().has_value())
+            if (_path.getFrames().has_value() && _path.getFrames()->size() > 1)
             {
                 out.videoStart = core::MediaTime();
                 out.videoStart->frames = _path.getFrames()->min();
-                out.videoDuration.frames = _path.getFrames()->max();
+                out.videoDuration.frames = _path.getFrames()->size();
+            }
+            else
+            {
+                out.videoDuration.frames = 1;
             }
             return out;
         }

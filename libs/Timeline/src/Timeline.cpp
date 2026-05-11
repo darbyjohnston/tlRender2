@@ -204,6 +204,7 @@ namespace tl
                                 track->children.push_back(clip);
 
                                 // Read the media references.
+                                clip->activeMediaReference = otioClip->active_media_reference_key();
                                 for (const auto& refIt : otioClip->media_references())
                                 {
                                     if (auto otioExternalRef =

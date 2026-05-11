@@ -57,6 +57,14 @@ namespace tl
                 const std::shared_ptr<io::ReadSystem>&,
                 const ftk::Path&);
 
+            void _printTrack(
+                const std::shared_ptr<io::ReadSystem>&,
+                const std::shared_ptr<timeline::Track>&,
+                int indent);
+            void _printClip(
+                const std::shared_ptr<io::ReadSystem>&,
+                const std::shared_ptr<timeline::Clip>&,
+                int indent);
             void _printIndented(const std::string&, int indent);
 
             CmdLine _cmdLine;

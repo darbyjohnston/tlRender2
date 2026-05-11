@@ -12,6 +12,8 @@ namespace tl
     {
         namespace
         {
+            constexpr core::MediaRate defaultRate{ 24, 1 };
+
             void oiioDiscardError()
             {
                 //! \bug If we don't get the error it will be automatically
@@ -165,12 +167,14 @@ namespace tl
             {
                 out.videoStart = core::MediaTime();
                 out.videoStart->frames = _path.getFrames()->min();
+                out.videoStart->rate = defaultRate;
                 out.videoDuration.frames = _path.getFrames()->size();
             }
             else
             {
                 out.videoDuration.frames = 1;
             }
+            out.videoDuration.rate = defaultRate;
             return out;
         }
 

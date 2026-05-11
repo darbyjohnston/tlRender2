@@ -18,6 +18,10 @@ namespace tl
                 "inputs",
                 "The input files. Media files and .otio timelines are supported.");
 
+            _cmdLine.brief = ftk::CmdLineFlag::create(
+                { "-brief" },
+                "Print brief information.");
+
             IApp::_init(
                 context,
                 argv,
@@ -26,7 +30,9 @@ namespace tl
                 {
                     _cmdLine.inputs
                 },
-                {});
+                {
+                    _cmdLine.brief
+                });
         }
 
         App::App()
@@ -124,12 +130,15 @@ namespace tl
                         arg(core::to_string(info.audioDuration)),
                         indent);
                 }
-                for (const auto& tag : info.tags)
+                if (!_cmdLine.brief->found())
                 {
-                    _printIndented(ftk::Format("  tag \"{0}\": \"{1}\"").
-                        arg(tag.first).
-                        arg(tag.second),
-                        indent);
+                    for (const auto& tag : info.tags)
+                    {
+                        _printIndented(ftk::Format("  tag \"{0}\": \"{1}\"").
+                            arg(tag.first).
+                            arg(tag.second),
+                            indent);
+                    }
                 }
             }
             catch (const std::exception& e)
@@ -150,22 +159,40 @@ namespace tl
                 int indent = 0;
                 _printIndented(path.get() + ":", indent);
                 indent += 2;
+                _printIndented(ftk::Format("rate: {0}").
+                    arg(core::to_string(timeline->getRate())),
+                    indent);
 
                 auto stack = timeline->getStack();
-                _printIndented(ftk::Format("stack \"{0}\":").arg(stack->name), indent);
+                _printIndented(ftk::Format("stack \"{0}\" ({1}, {2}):").
+                    arg(stack->name).
+                    arg(core::to_string(stack->startTime)).
+                    arg(core::to_string(stack->duration)),
+                    indent);
                 indent += 2;
+
                 for (const auto& stackChild : stack->children)
                 {
                     if (auto track = std::dynamic_pointer_cast<timeline::Track>(stackChild))
                     {
-                        _printIndented(ftk::Format("track \"{0}\":").arg(track->name), indent);
+                        _printIndented(ftk::Format("track \"{0}\" ({1}, {2}):").
+                            arg(track->name).
+                            arg(core::to_string(track->startTime)).
+                            arg(core::to_string(track->duration)),
+                            indent);
                         indent += 2;
+
                         for (const auto& trackChild : track->children)
                         {
                             if (auto clip = std::dynamic_pointer_cast<timeline::Clip>(trackChild))
                             {
-                                _printIndented(ftk::Format("clip \"{0}\":").arg(clip->name), indent);
+                                _printIndented(ftk::Format("clip \"{0}\" ({1}, {2}):").
+                                    arg(clip->name).
+                                    arg(core::to_string(clip->startTime)).
+                                    arg(core::to_string(clip->duration)),
+                                    indent);
                                 indent += 2;
+
                                 for (const auto& media : clip->media)
                                 {
                                     if (!_printMedia(readSystem, *media, indent))

@@ -27,8 +27,8 @@ namespace tl
         //! Media rate as a rational number (num/den frames per second).
         struct TL_API_TYPE MediaRate
         {
-            int num = 1;
-            int den = 24;
+            int num = 0;
+            int den = 0;
 
             //! Get the rate as a double (num / den).
             double toDouble() const;

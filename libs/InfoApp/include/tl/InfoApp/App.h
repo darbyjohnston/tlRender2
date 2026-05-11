@@ -19,6 +19,7 @@ namespace tl
         struct CmdLine
         {
             std::shared_ptr<ftk::CmdLineListArg<std::string> > inputs;
+            std::shared_ptr<ftk::CmdLineFlag> brief;
         };
 
         //! Application.

@@ -83,7 +83,10 @@ namespace tl
                     if (auto graph = timeline->getVideo(t))
                     {
                         if (_cmdLine.print->found())
-                            _printGraph(graph, indent + 2);
+                        {
+                            _printIndented("graph:", indent);
+                            _printVideoNode(graph->root, indent + 2);
+                        }
                     }
                 }
             }
@@ -93,44 +96,44 @@ namespace tl
             }
         }
 
-        void App::_printGraph(
-            const std::shared_ptr<timeline::VideoGraph>& graph,
-            int indent)
-        {
-            _printIndented("graph:", indent);
-            _printVideoNode(graph->root, indent + 2);
-        }
-
         void App::_printVideoNode(
             const std::shared_ptr<timeline::VideoNode>& node,
             int indent)
         {
             std::visit([this, indent](auto&& op)
             {
-                using T = std::decay_t<decltype(op)>;
-                if constexpr (std::is_same_v<T, timeline::ReadVideo>)
-                {
-                    _printIndented(ftk::Format("{0}:").arg(op.typeName), indent);
-                    if (op.media)
-                    {
-                        _printIndented(ftk::Format("path: {0}").
-                            arg(op.media->path.get()), indent + 2);
-                    }
-                    _printIndented(ftk::Format("source time: {0}").
-                        arg(core::to_string(op.sourceTime)), indent + 2);
-                    _printIndented(ftk::Format("reference key: {0}").
-                        arg(op.referenceKey), indent + 2);
-                }
-                else
-                {
-                    _printIndented(ftk::Format("{0}:").arg(op.typeName), indent);
-                }
+                _printIndented(ftk::Format("{0}:").arg(op.typeName), indent);
+                _printOpFields(op, indent + 2);
             }, node->op);
 
             for (const auto& input : node->inputs)
             {
                 _printVideoNode(input, indent + 2);
             }
+        }
+
+        void App::_printOpFields(const timeline::ReadVideo& op, int indent)
+        {
+            if (op.media)
+            {
+                _printIndented(ftk::Format("path: {0}").arg(op.media->path.get()), indent);
+            }
+            _printIndented(ftk::Format("source time: {0}").arg(core::to_string(op.sourceTime)), indent);
+            _printIndented(ftk::Format("reference key: {0}").arg(op.referenceKey), indent);
+        }
+
+        void App::_printOpFields(const timeline::CompositeVideo&, int)
+        {}
+
+        void App::_printOpFields(const timeline::DissolveVideo& op, int indent)
+        {
+            _printIndented(ftk::Format("mix: {0}").arg(op.mix), indent);
+        }
+
+        void App::_printOpFields(const timeline::ColorTransformVideo& op, int indent)
+        {
+            _printIndented(ftk::Format("from: {0}").arg(op.fromSpace), indent);
+            _printIndented(ftk::Format("to: {0}").arg(op.toSpace), indent);
         }
 
         void App::_printIndented(const std::string& s, int indent)

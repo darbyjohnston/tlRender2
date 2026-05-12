@@ -46,12 +46,13 @@ namespace tl
             void run() override;
 
         private:
-            void _printGraph(
-                const std::shared_ptr<timeline::VideoGraph>&,
-                int indent);
             void _printVideoNode(
                 const std::shared_ptr<timeline::VideoNode>&,
                 int indent);
+            void _printOpFields(const timeline::ReadVideo& op, int indent);
+            void _printOpFields(const timeline::CompositeVideo&, int indent);
+            void _printOpFields(const timeline::DissolveVideo& op, int indent);
+            void _printOpFields(const timeline::ColorTransformVideo& op, int indent);
             void _printIndented(const std::string&, int indent);
 
             CmdLine _cmdLine;

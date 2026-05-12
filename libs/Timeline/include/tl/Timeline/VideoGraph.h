@@ -5,6 +5,8 @@
 
 #include <tl/Timeline/Media.h>
 
+#include <variant>
+
 namespace tl
 {
     namespace timeline

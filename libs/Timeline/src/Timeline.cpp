@@ -22,6 +22,12 @@ namespace tl
 
     namespace timeline
     {
+        TL_ENUM_IMPL(
+            TrackType,
+            "Unknown",
+            "Video",
+            "Audio");
+
         IItem::~IItem()
         {}
 
@@ -51,6 +57,14 @@ namespace tl
         void Timeline::Private::readTrack(OTIO_NS::Track* otioTrack)
         {
             auto track = std::make_shared<Track>();
+            if (OTIO_NS::Track::Kind::video == otioTrack->kind())
+            {
+                track->type = TrackType::Video;
+            }
+            else if (OTIO_NS::Track::Kind::audio == otioTrack->kind())
+            {
+                track->type = TrackType::Audio;
+            }
             track->name = otioTrack->name();
             auto range = otioTrack->trimmed_range_in_parent();
             if (!range.has_value())
@@ -321,9 +335,59 @@ namespace tl
             return _p->stack;
         }
 
-        std::shared_ptr<VideoGraph> Timeline::getVideo(const Time&)
+        std::shared_ptr<VideoGraph> Timeline::getVideo(const Time& time)
         {
-            return nullptr;
+            FTK_P();
+    
+            // Stack-time relative to stack origin
+            const core::Time stackTime = { time.frames - p.stack->startTime.frames };
+    
+            // Collect active reads across all video tracks.
+            std::vector<VideoNodePtr> reads;
+            for (const auto& child : p.stack->children)
+            {
+                auto track = std::dynamic_pointer_cast<Track>(child);
+                if (!track || (track && track->type != TrackType::Video))
+                {
+                    continue;
+                }
+
+                // Time relative to this track
+                const core::Time trackTime = { stackTime.frames - track->startTime.frames };
+                if (trackTime.frames < 0 || trackTime.frames >= track->duration.frames)
+                {
+                    continue;
+                }
+                
+                // Find the active clip
+                if (auto active = findActiveClip(track, trackTime))
+                {
+                    const auto& [clip, clipTime] = *active;
+                    if (auto readNode = buildReadNode(clip, clipTime, p.rate))
+                    {
+                        reads.push_back(readNode);
+                    }
+                }
+            }
+            if (reads.empty())
+            {
+                return nullptr;
+            }
+            
+            auto graph = std::make_shared<VideoGraph>();
+            if (reads.size() == 1)
+            {
+                graph->root = reads[0];
+            }
+            else
+            {
+                auto comp = std::make_shared<VideoNode>();
+                comp->op = CompositeVideo{};
+                comp->inputs = std::move(reads);
+                graph->root = comp;
+            }
+            
+            return graph;
         }
 
         std::shared_ptr<Audio> Timeline::getAudio(int64_t seconds)

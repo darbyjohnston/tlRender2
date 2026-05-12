@@ -30,9 +30,22 @@ namespace tl
             std::string activeMediaReference;
         };
 
+        //! Track types.
+        enum class TL_API_TYPE TrackType
+        {
+            Unknown,
+            Video,
+            Audio,
+
+            Count,
+            First = Unknown
+        };
+        TL_ENUM(TrackType);
+
         //! Track.
         struct Track : public IItem
         {
+            TrackType type = TrackType::Unknown;
             std::vector<std::shared_ptr<IItem>> children;
         };
 

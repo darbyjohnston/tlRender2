@@ -5,8 +5,6 @@
 
 #include <tl/Timeline/Media.h>
 
-#include <ftk/Core/Image.h>
-
 namespace tl
 {
     namespace timeline
@@ -50,7 +48,6 @@ namespace tl
         {
             VideoOp op;
             std::vector<VideoNodePtr> inputs;
-            ftk::ImageInfo outputInfo;
         };
 
         //! Video graph.

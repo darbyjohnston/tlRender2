@@ -5,6 +5,7 @@
 
 #include <miniz.h>
 
+#include <optional>
 #include <string>
 
 namespace tl

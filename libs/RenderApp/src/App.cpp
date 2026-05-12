@@ -24,8 +24,8 @@ namespace tl
                 "output",
                 "Output media file.");
 
-            _cmdLine.print = ftk::CmdLineFlag::create(
-                { "-print" },
+            _cmdLine.info = ftk::CmdLineFlag::create(
+                { "-info" },
                 "Print information.");
 
             _cmdLine.frame = ftk::CmdLineOption<int>::create(
@@ -42,7 +42,7 @@ namespace tl
                     _cmdLine.output
                 },
                 {
-                    _cmdLine.print,
+                    _cmdLine.info,
                     _cmdLine.frame
                 });
         }
@@ -75,7 +75,7 @@ namespace tl
 
                 auto renderer = render::VideoRenderer::create(_context);
 
-                if (_cmdLine.print->found())
+                if (_cmdLine.info->found())
                 {
                     _printIndented(inputPath.get() + ":", 0);
                     _printIndented(ftk::Format("rate: {0}").
@@ -96,14 +96,13 @@ namespace tl
                 }
                 for (core::Time t = startT; t < endT; ++t.frames)
                 {
-                    if (_cmdLine.print->found())
-                        _printIndented(ftk::Format("frame: {0}").
-                            arg(core::to_string(t)),
-                            2);
+                    _printIndented(ftk::Format("frame: {0}").
+                        arg(core::to_string(t)),
+                        2);
                     
                     if (auto graph = timeline->getVideo(t))
                     {
-                        if (_cmdLine.print->found())
+                        if (_cmdLine.info->found())
                         {
                             _printIndented("graph:", 4);
                             _printVideoNode(graph->root, 6);

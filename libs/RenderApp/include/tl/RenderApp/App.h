@@ -20,7 +20,7 @@ namespace tl
         {
             std::shared_ptr<ftk::CmdLineArg<std::string> > input;
             std::shared_ptr<ftk::CmdLineArg<std::string> > output;
-            std::shared_ptr<ftk::CmdLineFlag> print;
+            std::shared_ptr<ftk::CmdLineFlag> info;
             std::shared_ptr<ftk::CmdLineOption<int>> frame;
         };
 

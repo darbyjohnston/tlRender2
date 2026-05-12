@@ -89,8 +89,7 @@ namespace tl
                     return plugin->read(path, mem, options);
                 }
             }
-            throw std::runtime_error(ftk::Format("Unknown file: ").arg(path.get()));
-            return nullptr;
+            throw std::runtime_error(ftk::Format("Cannot read \"{0}\": no plugin handles this format").arg(path.get()));
         }
 
         struct WriteSystem::Private
@@ -143,8 +142,7 @@ namespace tl
                     return plugin->write(path, options);
                 }
             }
-            throw std::runtime_error(ftk::Format("Unknown file: ").arg(path.get()));
-            return nullptr;
+            throw std::runtime_error(ftk::Format("Cannot write \"{0}\": no plugin handles this format").arg(path.get()));
         }
     }
 }

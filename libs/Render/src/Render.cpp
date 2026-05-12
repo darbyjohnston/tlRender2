@@ -3,7 +3,13 @@
 
 #include <tl/Render/Render.h>
 
+#include "OIIOUtil.h"
+
 #include <tl/IO/IOSystem.h>
+
+#include <ftk/Core/Format.h>
+
+#include <OpenImageIO/imagebufalgo.h>
 
 #include <unordered_map>
 
@@ -133,7 +139,56 @@ namespace tl
         std::shared_ptr<ftk::Image> VideoRenderer::Private::renderComposite(
             const std::vector<std::shared_ptr<ftk::Image>>& inputs)
         {
-            throw std::runtime_error("renderComposite: not implemented");
+            if (inputs.empty())
+            {
+                return nullptr;
+            }
+            if (inputs.size() == 1)
+            {
+                return inputs[0];
+            }
+
+            // Wrap inputs as ImageBufs and premultiply alpha (PNG and most
+            // file formats store non-premultiplied). over() expects
+            // premultiplied input.
+            std::vector<OIIO::ImageBuf> premultiplied;
+            premultiplied.reserve(inputs.size());
+            for (const auto& input : inputs)
+            {
+                OIIO::ImageBuf wrapped = wrap(*input);
+                OIIO::ImageBuf p;
+                if (!OIIO::ImageBufAlgo::premult(p, wrapped))
+                {
+                    throw std::runtime_error(OIIO::geterror());
+                }
+                premultiplied.push_back(std::move(p));
+            }
+
+            // Fold over() from bottom to top. inputs[0] is bottom of stack,
+            // inputs.back() is top (matches OTIO stack semantics).
+            OIIO::ImageBuf result = std::move(premultiplied[0]);
+            for (size_t i = 1; i < premultiplied.size(); ++i)
+            {
+                OIIO::ImageBuf composited;
+                if (!OIIO::ImageBufAlgo::over(
+                    composited,
+                    premultiplied[i],   // A: top
+                    result))            // B: accumulated bottom
+                {
+                    throw std::runtime_error(OIIO::geterror());
+                }
+                result = std::move(composited);
+            }
+
+            // Unpremultiply for output, since downstream consumers
+            // (PNG writers, etc.) expect non-premultiplied alpha.
+            OIIO::ImageBuf finalBuf;
+            if (!OIIO::ImageBufAlgo::unpremult(finalBuf, result))
+            {
+                throw std::runtime_error(OIIO::geterror());
+            }
+
+            return materialize(finalBuf);
         }
 
         std::shared_ptr<ftk::Image> VideoRenderer::Private::renderDissolve(

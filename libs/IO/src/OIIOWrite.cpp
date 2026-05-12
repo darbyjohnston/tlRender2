@@ -133,9 +133,11 @@ namespace tl
             const size_t scanlineByteCount = oiioSpec.scanline_bytes();
             if (!oiioOutput->write_image(
                 oiioSpec.format,
-                image->getData() + (info.size.h - 1) * scanlineByteCount,
+                info.layout.mirror.y ?
+                    image->getData() :
+                    image->getData() + (info.size.h - 1) * scanlineByteCount,
                 OIIO::AutoStride,
-                -scanlineByteCount,
+                info.layout.mirror.y ? scanlineByteCount : -scanlineByteCount,
                 OIIO::AutoStride))
             {
                 throw std::runtime_error(OIIO::geterror());

@@ -15,7 +15,7 @@ namespace tl
 {
     namespace io
     {
-        //! write options.
+        //! Write options.
         struct TL_API_TYPE WriteOptions
         {
         };

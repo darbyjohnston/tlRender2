@@ -186,7 +186,87 @@ namespace tl
             const MediaTime& time,
             const ReadOptions& options)
         {
-            return nullptr;
+            // Open the file.
+            const std::string fileName =
+                _path.getFrames().has_value() ?
+                _path.getFrame(time.frames, true) :
+                _path.getFileName(true);
+            std::unique_ptr<OIIO::Filesystem::IOMemReader> oiioMemReader;
+            if (!_mem.empty())
+            {
+                const Frame frames = time.frames;
+                if (_path.getFrames().has_value() && frames >= 0 && frames < _mem.size())
+                {
+                    oiioMemReader.reset(new OIIO::Filesystem::IOMemReader(_mem[frames].p, _mem[frames].size));
+                }
+                else if (!_path.getFrames().has_value())
+                {
+                    oiioMemReader.reset(new OIIO::Filesystem::IOMemReader(_mem.front().p, _mem.front().size));
+                }
+                else
+                {
+                    std::stringstream ss;
+                    ss << "Cannot open file: " << fileName;
+                    throw std::runtime_error(ss.str());
+                }
+            }
+            const auto oiioInput = OIIO::ImageInput::open(
+                fileName,
+                nullptr,
+                oiioMemReader.get());
+            if (!oiioInput)
+            {
+                oiioDiscardError();
+                std::stringstream ss;
+                ss << "Cannot open file: " << fileName;
+                throw std::runtime_error(ss.str());
+            }
+
+            // Find the layer.
+            if (!oiioInput->seek_subimage(options.layer, 0))
+            {
+                oiioDiscardError();
+                std::stringstream ss;
+                ss << "Cannot open layer: " << options.layer;
+                throw std::runtime_error(ss.str());
+            }
+
+            // Get file information.
+            const auto& oiioSpec = oiioInput->spec();
+            const ftk::ImageType imageType = fromOIIO(oiioSpec);
+            if (ftk::ImageType::None == imageType)
+            {
+                std::stringstream ss;
+                ss << "Unsupported file: " << fileName;
+                throw std::runtime_error(ss.str());
+            }
+
+            // Get the tags.
+            ftk::ImageInfo imageInfo(oiioSpec.width, oiioSpec.height, imageType);
+            imageInfo.layout.mirror.y = true;
+            ftk::ImageTags tags;
+            for (const auto& i : oiioSpec.extra_attribs)
+            {
+                tags[std::string(i.name())] = i.get_string();
+            }
+
+            // Read the image.
+            auto out = ftk::Image::create(imageInfo);
+            out->setTags(tags);
+            if (!oiioInput->read_image(
+                options.layer,
+                0,
+                0,
+                ftk::getChannelCount(imageType),
+                oiioSpec.format,
+                out->getData()))
+            {
+                oiioDiscardError();
+                std::stringstream ss;
+                ss << "Cannot read file: " << fileName;
+                throw std::runtime_error(ss.str());
+            }
+            return out;
         }
 
         std::shared_ptr<Audio> OIIORead::readAudio(

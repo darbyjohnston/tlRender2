@@ -12,7 +12,7 @@ namespace tl
 {
     namespace render
     {
-        class TL_API_TYPE VideoRenderer : public std::enable_shared_from_this<VideoRenderer>
+        class TL_API_TYPE VideoRenderer
         {
             FTK_NON_COPYABLE(VideoRenderer);
 
@@ -20,12 +20,17 @@ namespace tl
             VideoRenderer(const std::shared_ptr<ftk::Context>&);
 
         public:
+            ~VideoRenderer();
+
             //! Create a new renderer.
             static std::shared_ptr<VideoRenderer> create(
                 const std::shared_ptr<ftk::Context>&);
             
             //! Render a graph to an image.
             std::shared_ptr<ftk::Image> render(const timeline::VideoGraph& graph);
+        
+        private:
+            FTK_PRIVATE();
         };
     }
 }

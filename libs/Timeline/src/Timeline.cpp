@@ -321,14 +321,14 @@ namespace tl
             return _p->stack;
         }
 
-        std::shared_ptr<IVideoNode> Timeline::getVideo(const Time&)
+        std::shared_ptr<VideoGraph> Timeline::getVideo(const Time&)
         {
             return nullptr;
         }
 
-        std::future<std::shared_ptr<Audio> > Timeline::getAudio(int64_t seconds)
+        std::shared_ptr<Audio> Timeline::getAudio(int64_t seconds)
         {
-            return std::future<std::shared_ptr<Audio> >();
+            return nullptr;
         }
     }
 }

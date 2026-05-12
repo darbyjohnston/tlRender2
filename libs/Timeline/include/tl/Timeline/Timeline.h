@@ -5,32 +5,14 @@
 
 #include <tl/Timeline/VideoGraph.h>
 #include <tl/Core/Audio.h>
-#include <tl/Core/Time.h>
 
 #include <ftk/Core/Context.h>
 #include <ftk/Core/Observable.h>
-#include <ftk/Core/Path.h>
-#include <ftk/Core/FileIO.h>
 
 namespace tl
 {
     namespace timeline
     {
-        //! Media.
-        struct Media
-        {
-            ftk::Path path;
-            std::vector<ftk::MemFile> mem;
-        };
-
-        //! Media reference.
-        struct MediaReference
-        {
-            std::shared_ptr<Media> media;
-            std::optional<core::MediaTime> availableRangeStart;
-            std::optional<core::MediaDuration> availableRangeDuration;
-        };
-
         //! Base class for items in the timeline.
         struct IItem : public std::enable_shared_from_this<IItem>
         {
@@ -106,11 +88,11 @@ namespace tl
             //! Get the timeline stack.
             const std::shared_ptr<Stack>& getStack() const;
 
-            //! Get video for the given time.
-            std::shared_ptr<IVideoNode> getVideo(const core::Time&);
+            //! Get the video graph for the given time.
+            std::shared_ptr<VideoGraph> getVideo(const core::Time&);
 
             //! Get audio for the given seconds.
-            std::future<std::shared_ptr<core::Audio> > getAudio(int64_t seconds);
+            std::shared_ptr<core::Audio> getAudio(int64_t seconds);
 
         private:
             FTK_PRIVATE();

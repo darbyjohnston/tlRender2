@@ -3,34 +3,61 @@
 
 #pragma once
 
-#include <tl/Core/Time.h>
+#include <tl/Timeline/Media.h>
 
 #include <ftk/Core/Image.h>
-
-#include <future>
-#include <memory>
 
 namespace tl
 {
     namespace timeline
     {
-        struct TL_API_TYPE IVideoNode : public std::enable_shared_from_this<IVideoNode>
+        //! Read video data.
+        struct ReadVideo
         {
-            IVideoNode(const std::string& type);
-
-            virtual ~IVideoNode() = 0;
-
-            std::string type;
+            std::shared_ptr<Media> media;
+            core::MediaTime sourceTime;
+            std::string referenceKey;
         };
 
-        struct TL_API_TYPE InputVideoNode : public IVideoNode
+        //! Composite multiple inputs.
+        struct CompositeVideo
+        {};
+
+        //! Dissolve between two inputs.
+        struct DissolveVideo
         {
-            std::future<std::shared_ptr<ftk::Image> > image;
+            double mix = 0.0; // 0.0 = full input[0], 1.0 = full input[1]
         };
-        
-        struct TL_API_TYPE VideoNode : public IVideoNode
+
+        //! Color transorm.
+        struct ColorTransformVideo
         {
-            std::vector<std::shared_ptr<IVideoNode> > inputs;
+            std::string fromSpace;
+            std::string toSpace;
+        };
+
+        //! Video operation variants.
+        using VideoOp = std::variant<
+            ReadVideo,
+            CompositeVideo,
+            DissolveVideo,
+            ColorTransformVideo>;
+
+        //! Video graph node.
+        struct VideoNode;
+        using VideoNodePtr = std::shared_ptr<VideoNode>;
+        struct VideoNode
+        {
+            VideoOp op;
+            std::vector<VideoNodePtr> inputs;
+            ftk::ImageInfo outputInfo;
+        };
+
+        //! Video graph.
+        class VideoGraph
+        {
+        public:
+            VideoNodePtr root;
         };
     }
 }

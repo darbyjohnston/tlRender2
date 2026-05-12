@@ -347,7 +347,7 @@ namespace tl
             for (const auto& child : p.stack->children)
             {
                 auto track = std::dynamic_pointer_cast<Track>(child);
-                if (!track || (track && track->type != TrackType::Video))
+                if (!track || track->type != TrackType::Video)
                 {
                     continue;
                 }

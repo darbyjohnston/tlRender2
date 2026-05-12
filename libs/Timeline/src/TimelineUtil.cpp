@@ -95,6 +95,7 @@ namespace tl
                 //
                 //! \todo Need the media's own rate, which we don't have
                 //! without opening it. Or does the rate come from the OTIO clip?
+                sourceTime.frames = clipTime.frames;
                 sourceTime.rate = timelineRate;
             }
             

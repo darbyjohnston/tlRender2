@@ -148,6 +148,11 @@ namespace tl
         {
             return !(a == b);
         }
+
+        constexpr MediaTime mediaTime(const Time& t, const MediaRate& rate)
+        {
+            return { t.frames, rate };
+        }
     }
 }
 

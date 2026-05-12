@@ -76,15 +76,25 @@ namespace tl
                 auto renderer = render::VideoRenderer::create(_context);
 
                 if (_cmdLine.print->found())
+                {
                     _printIndented(inputPath.get() + ":", 0);
-                if (_cmdLine.print->found())
                     _printIndented(ftk::Format("rate: {0}").
                         arg(core::to_string(rate)),
                         2);
+                }
 
-                for (core::Time t = timeline->getStartTime();
-                    t < timeline->getStartTime() + timeline->getDuration();
-                    ++t.frames)
+                core::Time startT, endT;
+                if (_cmdLine.frame->found())
+                {
+                    startT.frames = _cmdLine.frame->getValue();
+                    endT.frames = startT.frames + 1;
+                }
+                else
+                {
+                    startT = timeline->getStartTime();
+                    endT = startT + timeline->getDuration();
+                }
+                for (core::Time t = startT; t < endT; ++t.frames)
                 {
                     if (_cmdLine.print->found())
                         _printIndented(ftk::Format("frame: {0}").
@@ -101,7 +111,7 @@ namespace tl
                         
                         if (auto image = renderer->render(*graph))
                         {
-                            writer->writeVideo(core::MediaTime{ t.frames, rate }, image);
+                            writer->writeVideo(core::mediaTime(t, rate), image);
                         }
                     }
                 }

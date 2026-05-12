@@ -97,7 +97,7 @@ namespace tl
 
             //! Observe the timeline duration.
             std::shared_ptr<ftk::IObservable<core::Duration> > observeDuration() const;
-
+            
             //! Get the timeline stack.
             const std::shared_ptr<Stack>& getStack() const;
 

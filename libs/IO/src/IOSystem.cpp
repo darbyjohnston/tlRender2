@@ -12,6 +12,7 @@
 #endif // TL_IO_HAS_OIIO
 
 #include <ftk/Core/Context.h>
+#include <ftk/Core/Format.h>
 
 namespace tl
 {
@@ -88,6 +89,7 @@ namespace tl
                     return plugin->read(path, mem, options);
                 }
             }
+            throw std::runtime_error(ftk::Format("Unknown file: ").arg(path.get()));
             return nullptr;
         }
 
@@ -141,6 +143,7 @@ namespace tl
                     return plugin->write(path, options);
                 }
             }
+            throw std::runtime_error(ftk::Format("Unknown file: ").arg(path.get()));
             return nullptr;
         }
     }

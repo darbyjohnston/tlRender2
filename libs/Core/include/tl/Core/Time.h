@@ -130,6 +130,11 @@ namespace tl
         //! Rescale a media duration to a different rate.
         TL_API MediaDuration rescale(const MediaDuration&, const MediaRate&);
 
+        //! Reinterpret a project time as a media time at the given rate.
+        //! Caller is responsible for ensuring this is meaningful (typically
+        //! when the project rate equals the media rate).
+        constexpr MediaTime mediaTime(const Time&, const MediaRate&);
+
         ///@}
 
         //! \name String conversion

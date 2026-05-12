@@ -28,6 +28,10 @@ namespace tl
             {
                 context->addSystem(io::ReadSystem::create(context));
             }
+            if (!context->getSystem<io::WriteSystem>())
+            {
+                context->addSystem(io::WriteSystem::create(context));
+            }
         }
     }
 }

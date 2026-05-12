@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <tl/IO/Plugin.h>
+#include <tl/IO/Read.h>
 
 extern "C"
 {
@@ -45,12 +45,12 @@ namespace tl
                 const std::shared_ptr<ftk::LogSystem>&);
 
             ReadInfo getInfo() override;
-            std::shared_ptr<ftk::Image> getVideo(
+            std::shared_ptr<ftk::Image> readVideo(
                 const core::MediaTime&,
                 const ReadOptions& = ReadOptions()) override;
-            std::shared_ptr<core::Audio> getAudio(
+            std::shared_ptr<core::Audio> readAudio(
                 const core::MediaTime&,
-                size_t sampleCount,
+                const core::MediaDuration&,
                 const ReadOptions& = ReadOptions()) override;
         
         private:

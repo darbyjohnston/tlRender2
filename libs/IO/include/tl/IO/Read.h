@@ -63,14 +63,14 @@ namespace tl
             virtual ReadInfo getInfo() = 0;
 
             //! Get video frames.
-            virtual std::shared_ptr<ftk::Image> getVideo(
+            virtual std::shared_ptr<ftk::Image> readVideo(
                 const core::MediaTime&,
                 const ReadOptions& = ReadOptions()) = 0;
 
             //! Get audio data.
-            virtual std::shared_ptr<core::Audio> getAudio(
+            virtual std::shared_ptr<core::Audio> readAudio(
                 const core::MediaTime&,
-                size_t sampleCount,
+                const core::MediaDuration&,
                 const ReadOptions& = ReadOptions()) = 0;
 
         protected:

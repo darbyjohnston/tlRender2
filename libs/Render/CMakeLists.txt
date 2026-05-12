@@ -1,22 +1,22 @@
-add_library(tlRenderApp)
+add_library(tlRender)
 
-target_sources(tlRenderApp
+target_sources(tlRender
     PRIVATE
-        include/tl/RenderApp/App.h
-        src/App.cpp)
+        include/tl/Render/Render.h
+        src/Render.cpp)
 
-target_include_directories(tlRenderApp
+target_include_directories(tlRender
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-target_link_libraries(tlRenderApp PUBLIC tlRender)
+target_link_libraries(tlRender PUBLIC tlTimeline)
 
-target_compile_features(tlRenderApp PUBLIC cxx_std_17)
+target_compile_features(tlRender PUBLIC cxx_std_17)
 
-install(TARGETS tlRenderApp
+install(TARGETS tlRender
     EXPORT tlRender2Targets
     LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}

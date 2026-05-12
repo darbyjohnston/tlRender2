@@ -7,10 +7,12 @@ target_sources(tlIO
     PRIVATE
         include/tl/IO/AudioResample.h
         include/tl/IO/IOSystem.h
-        include/tl/IO/Plugin.h
+        include/tl/IO/Read.h
+        include/tl/IO/Write.h
         src/AudioResample.cpp
         src/IOSystem.cpp
-        src/Plugin.cpp)
+        src/Read.cpp
+        src/Write.cpp)
 
 target_include_directories(tlIO
     PUBLIC
@@ -38,7 +40,9 @@ if(TL_ENABLE_OIIO)
     find_package(OpenImageIO CONFIG REQUIRED)
     target_sources(tlIO PRIVATE
         src/OIIORead.cpp
-        src/OIIORead.h)
+        src/OIIORead.h
+        src/OIIOWrite.cpp
+        src/OIIOWrite.h)
     target_link_libraries(tlIO PRIVATE OpenImageIO::OpenImageIO)
     target_compile_definitions(tlIO PRIVATE TL_IO_HAS_OIIO)
 endif()

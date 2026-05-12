@@ -601,17 +601,17 @@ namespace tl
             return _p->info;
         }
 
-        std::shared_ptr<ftk::Image> FFmpegRead::getVideo(
+        std::shared_ptr<ftk::Image> FFmpegRead::readVideo(
             const core::MediaTime& time,
             const ReadOptions& options)
         {
             return nullptr;
         }
 
-        std::shared_ptr<core::Audio> FFmpegRead::getAudio(
-            const core::MediaTime& time,
-            size_t sampleCount,
-            const ReadOptions& options)
+        std::shared_ptr<core::Audio> FFmpegRead::readAudio(
+            const core::MediaTime&,
+            const core::MediaDuration&,
+            const ReadOptions&)
         {
             return nullptr;
         }

@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include <tl/IO/Plugin.h>
+#include <tl/IO/Read.h>
+#include <tl/IO/Write.h>
 
 #include <ftk/Core/ISystem.h>
 
@@ -42,6 +43,35 @@ namespace tl
                 const std::vector<ftk::MemFile>&,
                 const ReadOptions& = {});
         
+        private:
+            FTK_PRIVATE();
+        };
+
+        //! Write system.
+        class TL_API_TYPE WriteSystem : public ftk::ISystem
+        {
+            FTK_NON_COPYABLE(WriteSystem);
+
+        protected:
+            WriteSystem(const std::shared_ptr<ftk::Context>&);
+
+        public:
+            virtual ~WriteSystem();
+
+            //! Create a new system.
+            static std::shared_ptr<WriteSystem> create(const std::shared_ptr<ftk::Context>&);
+
+            //! Add a plugin.
+            void addPlugin(const std::shared_ptr<IWritePlugin>&);
+
+            //! Get the supported file extensions.
+            const std::vector<std::string>& getExts() const;
+
+            //! Open a file for writing.
+            std::shared_ptr<IWrite> write(
+                const ftk::Path&,
+                const WriteOptions& = {});
+
         private:
             FTK_PRIVATE();
         };

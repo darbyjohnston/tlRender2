@@ -182,17 +182,17 @@ namespace tl
             return out;
         }
 
-        std::shared_ptr<ftk::Image> OIIORead::getVideo(
+        std::shared_ptr<ftk::Image> OIIORead::readVideo(
             const MediaTime& time,
             const ReadOptions& options)
         {
             return nullptr;
         }
 
-        std::shared_ptr<Audio> OIIORead::getAudio(
-            const MediaTime& time,
-            size_t sampleCount,
-            const ReadOptions& options)
+        std::shared_ptr<Audio> OIIORead::readAudio(
+            const MediaTime&,
+            const core::MediaDuration&,
+            const ReadOptions&)
         {
             return nullptr;
         }

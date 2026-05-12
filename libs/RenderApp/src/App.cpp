@@ -3,6 +3,8 @@
 
 #include <tl/RenderApp/App.h>
 
+#include <tl/Render/Render.h>
+
 #include <ftk/Core/Context.h>
 #include <ftk/Core/Format.h>
 
@@ -16,7 +18,11 @@ namespace tl
         {
             _cmdLine.input = ftk::CmdLineArg<std::string>::create(
                 "input",
-                "Input file. Timelines and media files are supported.");
+                "Input timeline or media file.");
+
+            _cmdLine.output = ftk::CmdLineArg<std::string>::create(
+                "output",
+                "Output media file.");
 
             _cmdLine.print = ftk::CmdLineFlag::create(
                 { "-print" },
@@ -32,7 +38,8 @@ namespace tl
                 "tlrender",
                 "Render timelines and media.",
                 {
-                    _cmdLine.input
+                    _cmdLine.input,
+                    _cmdLine.output
                 },
                 {
                     _cmdLine.print,
@@ -59,17 +66,21 @@ namespace tl
         {
             try
             {
-                ftk::Path path(_cmdLine.input->getValue());
-                auto timeline = timeline::Timeline::create(_context, path);
+                ftk::Path inputPath(_cmdLine.input->getValue());
+                auto timeline = timeline::Timeline::create(_context, inputPath);
+                const auto rate = timeline->getRate();
 
-                int indent = 0;
+                ftk::Path outputPath(_cmdLine.output->getValue());
+                auto writer = _context->getSystem<io::WriteSystem>()->write(outputPath);
+
+                auto renderer = render::VideoRenderer::create(_context);
+
                 if (_cmdLine.print->found())
-                    _printIndented(path.get() + ":", indent);
-                indent += 2;
+                    _printIndented(inputPath.get() + ":", 0);
                 if (_cmdLine.print->found())
                     _printIndented(ftk::Format("rate: {0}").
-                        arg(core::to_string(timeline->getRate())),
-                        indent);
+                        arg(core::to_string(rate)),
+                        2);
 
                 for (core::Time t = timeline->getStartTime();
                     t < timeline->getStartTime() + timeline->getDuration();
@@ -78,14 +89,19 @@ namespace tl
                     if (_cmdLine.print->found())
                         _printIndented(ftk::Format("frame: {0}").
                             arg(core::to_string(t)),
-                            indent);
+                            2);
                     
                     if (auto graph = timeline->getVideo(t))
                     {
                         if (_cmdLine.print->found())
                         {
-                            _printIndented("graph:", indent);
-                            _printVideoNode(graph->root, indent + 2);
+                            _printIndented("graph:", 4);
+                            _printVideoNode(graph->root, 6);
+                        }
+                        
+                        if (auto image = renderer->render(*graph))
+                        {
+                            writer->writeVideo(core::MediaTime{ t.frames, rate }, image);
                         }
                     }
                 }

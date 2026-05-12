@@ -16,7 +16,7 @@ namespace tl
         {
             _cmdLine.inputs = ftk::CmdLineListArg<std::string>::create(
                 "inputs",
-                "Input files. Timeline and media files are supported.");
+                "Input timeline and media files.");
 
             _cmdLine.brief = ftk::CmdLineFlag::create(
                 { "-brief" },

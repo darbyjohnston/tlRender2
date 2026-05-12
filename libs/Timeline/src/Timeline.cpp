@@ -7,6 +7,8 @@
 #include "TimelineUtil.h"
 #include "ZipUtil.h"
 
+#include <tl/IO/IOSystem.h>
+
 #include <ftk/Core/Format.h>
 
 #include <opentimelineio/clip.h>
@@ -33,6 +35,7 @@ namespace tl
 
         struct Timeline::Private
         {
+            void readTimeline(OTIO_NS::Timeline*);
             void readTrack(OTIO_NS::Track*);
             void readClip(
                 const std::shared_ptr<Track>&,
@@ -46,13 +49,37 @@ namespace tl
             ftk::Path path;
             std::shared_ptr<ftk::FileIO> fileIO;
             std::map<std::string, ftk::MemFile> zipMem;
-            MediaRate rate = MediaRate{ 24, 1 };
+            MediaRate rate = MediaRate(24);
             std::shared_ptr<ftk::Observable<Time> > startTime;
             std::shared_ptr<ftk::Observable<Duration> > duration;
             std::shared_ptr<Stack> stack;
             std::filesystem::path timelineDir;
             std::map<std::string, std::shared_ptr<Media>> seen;
         };
+
+        void Timeline::Private::readTimeline(OTIO_NS::Timeline* otioTimeline)
+        {
+            rate = mediaDurationFromOTIO(otioTimeline->duration()).rate;
+            startTime->setIfChanged(otioTimeline->global_start_time().has_value() ?
+                timeFromOTIO(otioTimeline->global_start_time().value(), rate.toDouble()) :
+                Time());
+            duration->setIfChanged(
+                durationFromOTIO(otioTimeline->duration(), rate.toDouble()));
+
+            auto otioStack = otioTimeline->tracks();
+            stack->name = otioStack->name();
+            stack->startTime = startTime->get();
+            stack->duration = duration->get();
+
+            // Read the tracks.
+            for (const auto& otioTimelineChild : otioStack->children())
+            {
+                if (auto otioTrack = OTIO_NS::dynamic_retainer_cast<OTIO_NS::Track>(otioTimelineChild))
+                {
+                    readTrack(otioTrack);
+                }
+            }
+        }
 
         void Timeline::Private::readTrack(OTIO_NS::Track* otioTrack)
         {
@@ -238,8 +265,10 @@ namespace tl
                         };
                     }
                 }
+                
+                p.readTimeline(otioTimeline);
             }
-            else if (!path.get().empty())
+            else if (".otio" == ftk::toLower(path.getExt()))
             {
                 otioTimeline = dynamic_cast<OTIO_NS::Timeline*>(
                     OTIO_NS::Timeline::from_json_file(path.get(), &errorStatus));
@@ -249,29 +278,38 @@ namespace tl
                         arg(path.get()).
                         arg(errorStatus.full_description));
                 }
+                p.readTimeline(otioTimeline);
             }
-
-            if (otioTimeline)
+            else if (!path.get().empty())
             {
-                p.rate = mediaDurationFromOTIO(otioTimeline->duration()).rate;
-                p.startTime->setIfChanged(otioTimeline->global_start_time().has_value() ?
-                    timeFromOTIO(otioTimeline->global_start_time().value(), p.rate.toDouble()) :
-                    Time());
-                p.duration->setIfChanged(
-                    durationFromOTIO(otioTimeline->duration(), p.rate.toDouble()));
-
-                auto otioStack = otioTimeline->tracks();
-                p.stack->name = otioStack->name();
-                p.stack->startTime = p.startTime->get();
-                p.stack->duration = p.duration->get();
-
-                // Read the tracks.
-                for (const auto& otioTimelineChild : otioStack->children())
+                auto readSystem = context->getSystem<io::ReadSystem>();
+                if (auto read = readSystem->read(path))
                 {
-                    if (auto otioTrack = OTIO_NS::dynamic_retainer_cast<OTIO_NS::Track>(otioTimelineChild))
-                    {
-                        p.readTrack(otioTrack);
-                    }
+                    // Construct a timeline from the media.
+                    const auto info = read->getInfo();
+                    p.rate = info.videoDuration.rate;
+
+                    auto media = std::make_shared<Media>();
+                    media->path = path;
+
+                    auto ref = std::make_shared<MediaReference>();
+                    ref->media = media;
+                    ref->availableRangeStart = info.videoStart;
+                    ref->availableRangeDuration = info.videoDuration;
+                    
+                    auto clip = std::make_shared<Clip>();
+                    clip->name = "Name";
+                    clip->mediaReferences[defaultMediaReference] = ref;
+                    clip->duration.frames = info.videoDuration.frames;
+                    
+                    auto track = std::make_shared<Track>();
+                    track->name = "Track";
+                    track->duration.frames = info.videoDuration.frames;
+                    track->children.push_back(clip);
+                    
+                    p.stack->name = path.getFileName();
+                    p.stack->duration.frames = info.videoDuration.frames;
+                    p.stack->children.push_back(track);
                 }
             }
         }

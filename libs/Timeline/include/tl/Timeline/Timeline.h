@@ -27,7 +27,7 @@ namespace tl
         struct Clip : public IItem
         {
             std::map<std::string, std::shared_ptr<MediaReference>> mediaReferences;
-            std::string activeMediaReference;
+            std::string activeMediaReference = defaultMediaReference;
         };
 
         //! Track types.
@@ -74,7 +74,7 @@ namespace tl
             static std::shared_ptr<Timeline> create(
                 const std::shared_ptr<ftk::Context>&);
 
-            //! Create a new timeline from an .otio, .otioz, or .otiod file.
+            //! Create a new timeline from a timeline file or media file.
             static std::shared_ptr<Timeline> create(
                 const std::shared_ptr<ftk::Context>&,
                 const ftk::Path&);

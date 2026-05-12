@@ -8,12 +8,14 @@
 
 namespace tl
 {
+    using namespace core;
+
     namespace io
     {
         namespace
         {
-            constexpr core::MediaRate defaultRate{ 24, 1 };
-            constexpr core::MediaRate defaultStillRate{ 1, 1 };
+            constexpr MediaRate defaultRate = MediaRate(24);
+            constexpr MediaRate defaultStillRate = MediaRate(1);
 
             void oiioDiscardError()
             {
@@ -166,7 +168,7 @@ namespace tl
             }
             if (_path.getFrames().has_value() && _path.getFrames()->size() > 1)
             {
-                out.videoStart = core::MediaTime();
+                out.videoStart = MediaTime();
                 out.videoStart->frames = _path.getFrames()->min();
                 out.videoStart->rate = defaultRate;
                 out.videoDuration.frames = _path.getFrames()->size();
@@ -181,14 +183,14 @@ namespace tl
         }
 
         std::shared_ptr<ftk::Image> OIIORead::getVideo(
-            const core::MediaTime& time,
+            const MediaTime& time,
             const ReadOptions& options)
         {
             return nullptr;
         }
 
-        std::shared_ptr<core::Audio> OIIORead::getAudio(
-            const core::MediaTime& time,
+        std::shared_ptr<Audio> OIIORead::getAudio(
+            const MediaTime& time,
             size_t sampleCount,
             const ReadOptions& options)
         {

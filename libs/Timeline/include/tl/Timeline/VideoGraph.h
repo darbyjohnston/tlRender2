@@ -14,24 +14,29 @@ namespace tl
         //! Read video data.
         struct ReadVideo
         {
+            static constexpr const char* typeName = "ReadVideo";
             std::shared_ptr<Media> media;
             core::MediaTime sourceTime;
-            std::string referenceKey;
+            std::string referenceKey = defaultMediaReference;
         };
 
         //! Composite multiple inputs.
         struct CompositeVideo
-        {};
+        {
+            static constexpr const char* typeName = "CompositeVideo";
+        };
 
         //! Dissolve between two inputs.
         struct DissolveVideo
         {
+            static constexpr const char* typeName = "DissolveVideo";
             double mix = 0.0; // 0.0 = full input[0], 1.0 = full input[1]
         };
 
-        //! Color transorm.
+        //! Color transform.
         struct ColorTransformVideo
         {
+            static constexpr const char* typeName = "ColorTransformVideo";
             std::string fromSpace;
             std::string toSpace;
         };
@@ -44,13 +49,12 @@ namespace tl
             ColorTransformVideo>;
 
         //! Video graph node.
-        struct VideoNode;
-        using VideoNodePtr = std::shared_ptr<VideoNode>;
         struct VideoNode
         {
             VideoOp op;
-            std::vector<VideoNodePtr> inputs;
+            std::vector<std::shared_ptr<VideoNode>> inputs;
         };
+        using VideoNodePtr = std::shared_ptr<VideoNode>;
 
         //! Video graph.
         class VideoGraph

@@ -44,6 +44,7 @@ namespace tl
 
         void AudioResampleTest::_process()
         {
+#if defined(TL_ENABLE_FFMPEG)
             // S16 stereo @ 48kHz -> F32 stereo @ 48kHz: same rate so output
             // sample count should match (or be very close to) input.
             const core::AudioInfo in(2, core::AudioType::S16, 48000);
@@ -66,6 +67,7 @@ namespace tl
 
             // flush() should not crash on a fresh resampler.
             resampler->flush();
+#endif // TL_ENABLE_FFMPEG
         }
     }
 }

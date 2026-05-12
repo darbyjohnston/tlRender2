@@ -16,7 +16,7 @@ namespace tl
         {
             _cmdLine.inputs = ftk::CmdLineListArg<std::string>::create(
                 "inputs",
-                "The input files. Media files and .otio timelines are supported.");
+                "Input files. Timeline and media files are supported.");
 
             _cmdLine.brief = ftk::CmdLineFlag::create(
                 { "-brief" },
@@ -55,16 +55,7 @@ namespace tl
             auto readSystem = _context->getSystem<io::ReadSystem>();
             for (const auto& input : _cmdLine.inputs->getList())
             {
-                const ftk::Path path(input);
-                const std::string ext = ftk::toLower(path.getExt());
-                if (ext == ".otio" || ext == ".otioz" || ext == ".otiod")
-                {
-                    _printTimeline(readSystem, path);
-                }
-                else if (!_printMedia(readSystem, { path }))
-                {
-                    _printError("Unknown file: " + input);
-                }
+                _printTimeline(readSystem, ftk::Path(input));
             }
         }
 

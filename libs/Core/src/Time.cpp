@@ -22,34 +22,14 @@ namespace tl
         MediaRate mediaRate60()     { return { 60,    1    }; }
         MediaRate mediaRate59_94()  { return { 60000, 1001 }; }
 
-        bool operator == (const MediaTime& a, const MediaTime& b)
-        {
-            return a.frames == b.frames && a.rate == b.rate;
-        }
-
-        bool operator != (const MediaTime& a, const MediaTime& b)
-        {
-            return !(a == b);
-        }
-
-        bool operator == (const MediaDuration& a, const MediaDuration& b)
-        {
-            return a.frames == b.frames && a.rate == b.rate;
-        }
-
-        bool operator != (const MediaDuration& a, const MediaDuration& b)
-        {
-            return !(a == b);
-        }
-
         namespace
         {
             // Round-half-to-even ("banker's rounding") to limit cumulative
             // bias when rescaling repeatedly.
-            int64_t roundToInt64(double v)
+            Frame roundToInt64(double v)
             {
                 const double r = std::nearbyint(v);
-                return static_cast<int64_t>(r);
+                return static_cast<Frame>(r);
             }
         }
 

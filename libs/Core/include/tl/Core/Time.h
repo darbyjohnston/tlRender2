@@ -12,32 +12,38 @@ namespace tl
 {
     namespace core
     {
+        // Frame.
+        typedef int64_t Frame;
+
         //! Time, in project frames.
         struct TL_API_TYPE Time
         {
-            int64_t frames = 0;
+            Frame frames = 0;
         };
 
         //! Duration, in project frames.
         struct TL_API_TYPE Duration
         {
-            int64_t frames = 0;
+            Frame frames = 0;
         };
 
         //! Media rate as a rational number (num/den frames per second).
         struct TL_API_TYPE MediaRate
         {
+            MediaRate() = default;
+            constexpr MediaRate(int num, int dev = 1);
+
             int num = 0;
             int den = 0;
 
             //! Get the rate as a double (num / den).
-            double toDouble() const;
+            constexpr double toDouble() const;
 
             //! Is the rate valid (positive numerator and denominator)?
-            bool isValid() const;
+            constexpr bool isValid() const;
 
-            bool operator == (const MediaRate&) const;
-            bool operator != (const MediaRate&) const;
+            constexpr bool operator == (const MediaRate&) const;
+            constexpr bool operator != (const MediaRate&) const;
         };
 
         //! Common media rates.
@@ -54,25 +60,58 @@ namespace tl
         //! Media time, in frames at a given rate.
         struct TL_API_TYPE MediaTime
         {
-            int64_t   frames = 0;
+            Frame     frames = 0;
             MediaRate rate;
 
             //! Get the time in seconds.
-            double toSeconds() const;
+            constexpr double toSeconds() const;
         };
 
         //! Media duration, in frames at a given rate.
         struct TL_API_TYPE MediaDuration
         {
-            int64_t   frames = 0;
+            Frame     frames = 0;
             MediaRate rate;
 
             //! Get the duration in seconds.
-            double toSeconds() const;
+            constexpr double toSeconds() const;
         };
 
-        // Inline arithmetic and comparison operators on Time and Duration
-        // are defined in TimeInline.h.
+        //! \name Time / Duration operations
+        ///@{
+
+        constexpr Time operator + (const Time& t, const Duration& d);
+        constexpr Time operator + (const Duration& d, Time t);
+        constexpr Time operator - (const Time& t, const Duration& d);
+
+        constexpr Duration operator - (const Time& a, const Time& b);
+        constexpr Duration operator + (const Duration& a, const Duration& b);
+        constexpr Duration operator - (const Duration& a, const Duration& b);
+        constexpr Duration operator - (const Duration& d);
+        constexpr Duration operator * (const Duration& d, Frame n);
+        constexpr Duration operator * (Frame n, const Duration& d);
+
+        constexpr Time& operator += (Time& t, const Duration& d);
+        constexpr Time& operator -= (Time& t, const Duration& d);
+
+        constexpr Duration& operator += (Duration& a, const Duration& b);
+        constexpr Duration& operator -= (Duration& a, const Duration& b);
+
+        constexpr bool operator == (const Time&, const Time&);
+        constexpr bool operator != (const Time&, const Time&);
+        constexpr bool operator <  (const Time&, const Time&);
+        constexpr bool operator <= (const Time&, const Time&);
+        constexpr bool operator >  (const Time&, const Time&);
+        constexpr bool operator >= (const Time&, const Time&);
+
+        constexpr bool operator == (const Duration&, const Duration&);
+        constexpr bool operator != (const Duration&, const Duration&);
+        constexpr bool operator <  (const Duration&, const Duration&);
+        constexpr bool operator <= (const Duration&, const Duration&);
+        constexpr bool operator >  (const Duration&, const Duration&);
+        constexpr bool operator >= (const Duration&, const Duration&);
+
+        ///@}
 
         //! \name MediaTime / MediaDuration operations
         //!
@@ -80,10 +119,10 @@ namespace tl
         //! the rescale helpers first.
         ///@{
 
-        TL_API bool operator == (const MediaTime&, const MediaTime&);
-        TL_API bool operator != (const MediaTime&, const MediaTime&);
-        TL_API bool operator == (const MediaDuration&, const MediaDuration&);
-        TL_API bool operator != (const MediaDuration&, const MediaDuration&);
+        constexpr bool operator == (const MediaTime&, const MediaTime&);
+        constexpr bool operator != (const MediaTime&, const MediaTime&);
+        constexpr bool operator == (const MediaDuration&, const MediaDuration&);
+        constexpr bool operator != (const MediaDuration&, const MediaDuration&);
 
         //! Rescale a media time to a different rate.
         TL_API MediaTime rescale(const MediaTime&, const MediaRate&);

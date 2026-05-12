@@ -5,124 +5,149 @@ namespace tl
 {
     namespace core
     {
-        inline double MediaRate::toDouble() const
+        constexpr MediaRate::MediaRate(int num, int den) :
+            num(num),
+            den(den)
+        {}
+
+        constexpr double MediaRate::toDouble() const
         {
             return den != 0 ?
                 static_cast<double>(num) / static_cast<double>(den) :
                 0.0;
         }
 
-        inline bool MediaRate::isValid() const
+        constexpr bool MediaRate::isValid() const
         {
             return num > 0 && den > 0;
         }
 
-        inline bool MediaRate::operator == (const MediaRate& other) const
+        constexpr bool MediaRate::operator == (const MediaRate& other) const
         {
             return num == other.num && den == other.den;
         }
 
-        inline bool MediaRate::operator != (const MediaRate& other) const
+        constexpr bool MediaRate::operator != (const MediaRate& other) const
         {
             return !(*this == other);
         }
 
-        inline double MediaTime::toSeconds() const
+        constexpr double MediaTime::toSeconds() const
         {
             return rate.num != 0 ?
                 static_cast<double>(frames) * rate.den / rate.num :
                 0.0;
         }
 
-        inline double MediaDuration::toSeconds() const
+        constexpr double MediaDuration::toSeconds() const
         {
             return rate.num != 0 ?
                 static_cast<double>(frames) * rate.den / rate.num :
                 0.0;
         }
 
-        inline Time operator + (Time t, Duration d)
+        constexpr Time operator + (const Time& t, const Duration& d)
         {
             return { t.frames + d.frames };
         }
 
-        inline Time operator + (Duration d, Time t)
+        constexpr Time operator + (const Duration& d, const Time& t)
         {
             return { t.frames + d.frames };
         }
 
-        inline Time operator - (Time t, Duration d)
+        constexpr Time operator - (const Time& t, const Duration& d)
         {
             return { t.frames - d.frames };
         }
 
-        inline Duration operator - (Time a, Time b)
+        constexpr Duration operator - (const Time& a, const Time& b)
         {
             return { a.frames - b.frames };
         }
 
-        inline Duration operator + (Duration a, Duration b)
+        constexpr Duration operator + (const Duration& a, const Duration& b)
         {
             return { a.frames + b.frames };
         }
 
-        inline Duration operator - (Duration a, Duration b)
+        constexpr Duration operator - (const Duration& a, const Duration& b)
         {
             return { a.frames - b.frames };
         }
 
-        inline Duration operator - (Duration d)
+        constexpr Duration operator - (const Duration& d)
         {
             return { -d.frames };
         }
 
-        inline Duration operator * (Duration d, int64_t n)
+        constexpr Duration operator * (const Duration& d, Frame n)
         {
             return { d.frames * n };
         }
 
-        inline Duration operator * (int64_t n, Duration d)
+        constexpr Duration operator * (Frame n, const Duration& d)
         {
             return { d.frames * n };
         }
 
-        inline Time& operator += (Time& t, Duration d)
+        constexpr Time& operator += (Time& t, const Duration& d)
         {
             t.frames += d.frames;
             return t;
         }
 
-        inline Time& operator -= (Time& t, Duration d)
+        constexpr Time& operator -= (Time& t, const Duration& d)
         {
             t.frames -= d.frames;
             return t;
         }
 
-        inline Duration& operator += (Duration& a, Duration b)
+        constexpr Duration& operator += (Duration& a, const Duration& b)
         {
             a.frames += b.frames;
             return a;
         }
 
-        inline Duration& operator -= (Duration& a, Duration b)
+        constexpr Duration& operator -= (Duration& a, const Duration& b)
         {
             a.frames -= b.frames;
             return a;
         }
 
-        inline bool operator == (Time a, Time b) { return a.frames == b.frames; }
-        inline bool operator != (Time a, Time b) { return a.frames != b.frames; }
-        inline bool operator <  (Time a, Time b) { return a.frames <  b.frames; }
-        inline bool operator <= (Time a, Time b) { return a.frames <= b.frames; }
-        inline bool operator >  (Time a, Time b) { return a.frames >  b.frames; }
-        inline bool operator >= (Time a, Time b) { return a.frames >= b.frames; }
+        constexpr bool operator == (const Time& a, const Time& b) { return a.frames == b.frames; }
+        constexpr bool operator != (const Time& a, const Time& b) { return a.frames != b.frames; }
+        constexpr bool operator <  (const Time& a, const Time& b) { return a.frames <  b.frames; }
+        constexpr bool operator <= (const Time& a, const Time& b) { return a.frames <= b.frames; }
+        constexpr bool operator >  (const Time& a, const Time& b) { return a.frames >  b.frames; }
+        constexpr bool operator >= (const Time& a, const Time& b) { return a.frames >= b.frames; }
 
-        inline bool operator == (Duration a, Duration b) { return a.frames == b.frames; }
-        inline bool operator != (Duration a, Duration b) { return a.frames != b.frames; }
-        inline bool operator <  (Duration a, Duration b) { return a.frames <  b.frames; }
-        inline bool operator <= (Duration a, Duration b) { return a.frames <= b.frames; }
-        inline bool operator >  (Duration a, Duration b) { return a.frames >  b.frames; }
-        inline bool operator >= (Duration a, Duration b) { return a.frames >= b.frames; }
+        constexpr bool operator == (const Duration& a, const Duration& b) { return a.frames == b.frames; }
+        constexpr bool operator != (const Duration& a, const Duration& b) { return a.frames != b.frames; }
+        constexpr bool operator <  (const Duration& a, const Duration& b) { return a.frames <  b.frames; }
+        constexpr bool operator <= (const Duration& a, const Duration& b) { return a.frames <= b.frames; }
+        constexpr bool operator >  (const Duration& a, const Duration& b) { return a.frames >  b.frames; }
+        constexpr bool operator >= (const Duration& a, const Duration& b) { return a.frames >= b.frames; }
+
+        constexpr bool operator == (const MediaTime& a, const MediaTime& b)
+        {
+            return a.frames == b.frames && a.rate == b.rate;
+        }
+
+        constexpr bool operator != (const MediaTime& a, const MediaTime& b)
+        {
+            return !(a == b);
+        }
+
+        constexpr bool operator == (const MediaDuration& a, const MediaDuration& b)
+        {
+            return a.frames == b.frames && a.rate == b.rate;
+        }
+
+        constexpr bool operator != (const MediaDuration& a, const MediaDuration& b)
+        {
+            return !(a == b);
+        }
     }
 }
 

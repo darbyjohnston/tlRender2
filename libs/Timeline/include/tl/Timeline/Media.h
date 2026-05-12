@@ -26,5 +26,8 @@ namespace tl
             std::optional<core::MediaTime> availableRangeStart;
             std::optional<core::MediaDuration> availableRangeDuration;
         };
+        
+        //! Default media reference key.
+        const std::string defaultMediaReference = "DEFAULT_MEDIA";
     }
 }

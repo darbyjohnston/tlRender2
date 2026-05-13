@@ -43,6 +43,11 @@ namespace tl
             return !(*this == other);
         }
 
+        core::AudioInfo defaultAudioInfo()
+        {
+            return core::AudioInfo(2, core::AudioType::F32, 48000);
+        }
+
         struct Timeline::Private
         {
             void readTimeline(OTIO_NS::Timeline*);
@@ -67,7 +72,7 @@ namespace tl
             std::filesystem::path timelineDir;
             std::map<std::string, std::shared_ptr<Media>> seen;
             VideoInfo videoInfo;
-            core::AudioInfo audioInfo = defaultAudioInfo;
+            core::AudioInfo audioInfo = defaultAudioInfo();
         };
 
         void Timeline::Private::readTimeline(OTIO_NS::Timeline* otioTimeline)
@@ -280,9 +285,9 @@ namespace tl
                                 }
                             }
                         }
-                        if (audioFound)
-                            break;
                     }
+                    if (audioFound)
+                        break;
                 }
             }
         }

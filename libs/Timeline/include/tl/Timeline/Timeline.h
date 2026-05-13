@@ -66,8 +66,8 @@ namespace tl
             bool operator != (const VideoInfo&) const;
         };
         
-        //! Default audio information.
-        const core::AudioInfo defaultAudioInfo(2, core::AudioType::F32, 48000);
+        //! Get default audio information.
+        TL_API core::AudioInfo defaultAudioInfo();
 
         //! Timeline.
         class TL_API_TYPE Timeline : public std::enable_shared_from_this<Timeline>

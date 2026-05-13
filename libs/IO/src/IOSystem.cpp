@@ -73,7 +73,7 @@ namespace tl
                     return plugin->read(path, options);
                 }
             }
-            return nullptr;
+            throw std::runtime_error(ftk::Format("Cannot read \"{0}\": no plugin handles this format").arg(path.get()));
         }
         
         std::shared_ptr<IRead> ReadSystem::read(

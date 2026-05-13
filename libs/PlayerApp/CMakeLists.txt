@@ -1,26 +1,24 @@
-add_library(tlUI)
+add_library(tlPlayerApp)
 
-target_sources(tlUI
+target_sources(tlPlayerApp
     PRIVATE
-        include/tl/UI/TimeUnitsModel.h
-        include/tl/UI/TimeUnitsWidget.h
-        include/tl/UI/TimelineWidget.h
-        src/TimeUnitsModel.cpp
-        src/TimeUnitsWidget.cpp
-        src/TimelineWidget.cpp)
+        include/tl/PlayerApp/App.h
+        include/tl/PlayerApp/MainWindow.h
+        src/App.cpp
+        src/MainWindow.cpp)
 
-target_include_directories(tlUI
+target_include_directories(tlPlayerApp
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-target_link_libraries(tlUI PUBLIC tlTimeline ftk::ftkUI)
+target_link_libraries(tlPlayerApp PUBLIC tlUI)
 
-target_compile_features(tlUI PUBLIC cxx_std_17)
+target_compile_features(tlPlayerApp PUBLIC cxx_std_17)
 
-install(TARGETS tlUI
+install(TARGETS tlPlayerApp
     EXPORT tlRender2Targets
     LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}

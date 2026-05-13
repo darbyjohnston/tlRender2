@@ -1,7 +1,31 @@
-#include <tl/UI/TimelineWidget.h>
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright Contributors to the tlRender project.
 
-int main(int argc, char** argv)
+#include <tl/PlayerApp/App.h>
+#include <tl/Timeline/Init.h>
+
+#include <ftk/Core/Context.h>
+
+#include <iostream>
+
+FTK_MAIN()
 {
-    tl::ui::TimelineWidget widget;
-    return 0;
+    int r = 1;
+    try
+    {
+        auto context = ftk::Context::create();
+        tl::timeline::init(context);
+        auto args = ftk::convert(argc, argv);
+        auto app = tl::player_app::App::create(context, args);
+        r = app->getExit();
+        if (0 == r)
+        {
+            app->run();
+        }
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "ERROR: " << e.what() << std::endl;
+    }
+    return r;
 }

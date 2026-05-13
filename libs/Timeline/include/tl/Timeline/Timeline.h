@@ -56,6 +56,19 @@ namespace tl
             std::vector<std::shared_ptr<IItem>> children;
         };
 
+        //! Video information.
+        struct VideoInfo
+        {
+            ftk::Size2I    size = ftk::Size2I(1920, 1080);
+            ftk::ImageType type = ftk::ImageType::RGBA_U8;
+            
+            bool operator == (const VideoInfo&) const;
+            bool operator != (const VideoInfo&) const;
+        };
+        
+        //! Default audio information.
+        const core::AudioInfo defaultAudioInfo(2, core::AudioType::F32, 48000);
+
         //! Timeline.
         class TL_API_TYPE Timeline : public std::enable_shared_from_this<Timeline>
         {
@@ -100,7 +113,7 @@ namespace tl
             std::shared_ptr<ftk::IObservable<core::Duration> > observeDuration() const;
             
             //! Get video information.
-            const std::pair<ftk::Size2I, ftk::ImageType>& getVideoInfo() const;
+            const VideoInfo& getVideoInfo() const;
 
             //! Get audio information.
             const core::AudioInfo& getAudioInfo() const;

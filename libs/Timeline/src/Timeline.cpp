@@ -32,6 +32,16 @@ namespace tl
 
         IItem::~IItem()
         {}
+            
+        bool VideoInfo::operator == (const VideoInfo& other) const
+        {
+            return size == other.size && type == other.type;
+        }
+
+        bool VideoInfo::operator != (const VideoInfo& other) const
+        {
+            return !(*this == other);
+        }
 
         struct Timeline::Private
         {
@@ -56,13 +66,8 @@ namespace tl
             std::shared_ptr<Stack> stack;
             std::filesystem::path timelineDir;
             std::map<std::string, std::shared_ptr<Media>> seen;
-            std::pair<ftk::Size2I, ftk::ImageType> videoInfo = std::make_pair(
-                ftk::Size2I(1920, 1080),
-                ftk::ImageType::RGB_U8);
-            core::AudioInfo audioInfo = core::AudioInfo(
-                2,
-                core::AudioType::F32,
-                48000);
+            VideoInfo videoInfo;
+            core::AudioInfo audioInfo = defaultAudioInfo;
         };
 
         void Timeline::Private::readTimeline(OTIO_NS::Timeline* otioTimeline)
@@ -214,17 +219,14 @@ namespace tl
 
         void Timeline::Private::readInfo()
         {
-            bool videoFound = false;
-            bool audioFound = false;
             auto readSystem = context->getSystem<io::ReadSystem>();
+            bool videoFound = false;
             for (const auto& stackIt : stack->children)
             {
                 if (auto track = std::dynamic_pointer_cast<Track>(stackIt))
                 {
-                    switch (track->type)
+                    if (TrackType::Video == track->type)
                     {
-                    case TrackType::Video:
-                    case TrackType::Audio:
                         for (const auto& trackIt : track->children)
                         {
                             if (auto clip = std::dynamic_pointer_cast<Clip>(trackIt))
@@ -236,34 +238,52 @@ namespace tl
                                         i->second->media->path,
                                         i->second->media->mem);
                                     const auto info = read->getInfo();
-                                    switch (track->type)
+                                    if (!info.video.empty())
                                     {
-                                    case TrackType::Video:
-                                        if (!info.video.empty())
-                                        {
-                                            videoInfo.first = info.video.front().size;
-                                            videoInfo.second = info.video.front().type;
-                                            videoFound = true;
-                                        }
+                                        videoInfo.size = info.video.front().size;
+                                        videoInfo.type = info.video.front().type;
+                                        videoFound = true;
                                         break;
-                                    case TrackType::Audio:
-                                        if (!info.audio.empty())
-                                        {
-                                            audioInfo = info.audio.front();
-                                            audioFound = true;
-                                        }
-                                        break;
-                                    default: break;
                                     }
                                 }
                             }
                         }
-                        break;
-                    default: break;
+                        if (videoFound)
+                            break;
                     }
                 }
-                if (videoFound && audioFound)
-                    break;
+            }
+            bool audioFound = false;
+            for (const auto& stackIt : stack->children)
+            {
+                if (auto track = std::dynamic_pointer_cast<Track>(stackIt))
+                {
+                    if (TrackType::Audio == track->type)
+                    {
+                        for (const auto& trackIt : track->children)
+                        {
+                            if (auto clip = std::dynamic_pointer_cast<Clip>(trackIt))
+                            {
+                                auto i = clip->mediaReferences.find(clip->activeMediaReference);
+                                if (i != clip->mediaReferences.end() && i->second->media)
+                                {
+                                    auto read = readSystem->read(
+                                        i->second->media->path,
+                                        i->second->media->mem);
+                                    const auto info = read->getInfo();
+                                    if (!info.audio.empty())
+                                    {
+                                        audioInfo = info.audio.front();
+                                        audioFound = true;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        if (audioFound)
+                            break;
+                    }
+                }
             }
         }
 
@@ -433,7 +453,7 @@ namespace tl
             return _p->duration;
         }
 
-        const std::pair<ftk::Size2I, ftk::ImageType>& Timeline::getVideoInfo() const
+        const VideoInfo& Timeline::getVideoInfo() const
         {
             return _p->videoInfo;
         }

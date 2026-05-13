@@ -83,9 +83,9 @@ namespace tl
                         2);
                     const auto& videoInfo = timeline->getVideoInfo();
                     _printIndented(ftk::Format("video: {0}x{1} {2}").
-                        arg(videoInfo.first.w).
-                        arg(videoInfo.first.h).
-                        arg(videoInfo.second),
+                        arg(videoInfo.size.w).
+                        arg(videoInfo.size.h).
+                        arg(videoInfo.type),
                         2);
                     const auto& audioInfo = timeline->getAudioInfo();
                     _printIndented(ftk::Format("audio: {0} {1} {2}").

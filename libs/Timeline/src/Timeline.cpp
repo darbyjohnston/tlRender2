@@ -44,6 +44,7 @@ namespace tl
                 const std::shared_ptr<Clip>&,
                 const std::string&,
                 OTIO_NS::ExternalReference*);
+            void readInfo();
 
             std::shared_ptr<ftk::Context> context;
             ftk::Path path;
@@ -55,6 +56,13 @@ namespace tl
             std::shared_ptr<Stack> stack;
             std::filesystem::path timelineDir;
             std::map<std::string, std::shared_ptr<Media>> seen;
+            std::pair<ftk::Size2I, ftk::ImageType> videoInfo = std::make_pair(
+                ftk::Size2I(1920, 1080),
+                ftk::ImageType::RGB_U8);
+            core::AudioInfo audioInfo = core::AudioInfo(
+                2,
+                core::AudioType::F32,
+                48000);
         };
 
         void Timeline::Private::readTimeline(OTIO_NS::Timeline* otioTimeline)
@@ -79,6 +87,8 @@ namespace tl
                     readTrack(otioTrack);
                 }
             }
+            
+            readInfo();
         }
 
         void Timeline::Private::readTrack(OTIO_NS::Track* otioTrack)
@@ -199,6 +209,61 @@ namespace tl
                     mediaReference->media->mem = std::move(refMem);
                     seen[resolved->get()] = mediaReference->media;
                 }
+            }
+        }
+
+        void Timeline::Private::readInfo()
+        {
+            bool videoFound = false;
+            bool audioFound = false;
+            auto readSystem = context->getSystem<io::ReadSystem>();
+            for (const auto& stackIt : stack->children)
+            {
+                if (auto track = std::dynamic_pointer_cast<Track>(stackIt))
+                {
+                    switch (track->type)
+                    {
+                    case TrackType::Video:
+                    case TrackType::Audio:
+                        for (const auto& trackIt : track->children)
+                        {
+                            if (auto clip = std::dynamic_pointer_cast<Clip>(trackIt))
+                            {
+                                auto i = clip->mediaReferences.find(clip->activeMediaReference);
+                                if (i != clip->mediaReferences.end() && i->second->media)
+                                {
+                                    auto read = readSystem->read(
+                                        i->second->media->path,
+                                        i->second->media->mem);
+                                    const auto info = read->getInfo();
+                                    switch (track->type)
+                                    {
+                                    case TrackType::Video:
+                                        if (!info.video.empty())
+                                        {
+                                            videoInfo.first = info.video.front().size;
+                                            videoInfo.second = info.video.front().type;
+                                            videoFound = true;
+                                        }
+                                        break;
+                                    case TrackType::Audio:
+                                        if (!info.audio.empty())
+                                        {
+                                            audioInfo = info.audio.front();
+                                            audioFound = true;
+                                        }
+                                        break;
+                                    default: break;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    default: break;
+                    }
+                }
+                if (videoFound && audioFound)
+                    break;
             }
         }
 
@@ -366,6 +431,16 @@ namespace tl
         std::shared_ptr<ftk::IObservable<Duration> > Timeline::observeDuration() const
         {
             return _p->duration;
+        }
+
+        const std::pair<ftk::Size2I, ftk::ImageType>& Timeline::getVideoInfo() const
+        {
+            return _p->videoInfo;
+        }
+
+        const core::AudioInfo& Timeline::getAudioInfo() const
+        {
+            return _p->audioInfo;
         }
 
         const std::shared_ptr<Stack>& Timeline::getStack() const

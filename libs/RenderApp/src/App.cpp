@@ -81,6 +81,18 @@ namespace tl
                     _printIndented(ftk::Format("rate: {0}").
                         arg(core::to_string(rate)),
                         2);
+                    const auto& videoInfo = timeline->getVideoInfo();
+                    _printIndented(ftk::Format("video: {0}x{1} {2}").
+                        arg(videoInfo.first.w).
+                        arg(videoInfo.first.h).
+                        arg(videoInfo.second),
+                        2);
+                    const auto& audioInfo = timeline->getAudioInfo();
+                    _printIndented(ftk::Format("audio: {0} {1} {2}").
+                        arg(audioInfo.channelCount).
+                        arg(audioInfo.type).
+                        arg(audioInfo.sampleRate),
+                        2);
                 }
 
                 core::Time startT, endT;

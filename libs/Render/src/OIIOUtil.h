@@ -24,5 +24,8 @@ namespace tl
         //! data. Throws if the ImageBuf's spec doesn't map to an
         //! ftk::ImageType.
         std::shared_ptr<ftk::Image> materialize(const OIIO::ImageBuf&);
+        
+        //! Convert L-LA and RGB->RGBA.
+        OIIO::ImageBuf addAlpha(const OIIO::ImageBuf&);
     }
 }

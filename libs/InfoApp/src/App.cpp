@@ -153,26 +153,35 @@ namespace tl
             {
                 auto timeline = timeline::Timeline::create(_context, path);
 
-                int indent = 0;
-                _printIndented(path.get() + ":", indent);
-                indent += 2;
+                _printIndented(path.get() + ":", 0);
                 _printIndented(ftk::Format("rate: {0}").
                     arg(core::to_string(timeline->getRate())),
-                    indent);
+                    2);
+                const auto& videoInfo = timeline->getVideoInfo();
+                _printIndented(ftk::Format("video: {0}x{1} {2}").
+                    arg(videoInfo.first.w).
+                    arg(videoInfo.first.h).
+                    arg(videoInfo.second),
+                    2);
+                const auto& audioInfo = timeline->getAudioInfo();
+                _printIndented(ftk::Format("audio: {0} {1} {2}").
+                    arg(audioInfo.channelCount).
+                    arg(audioInfo.type).
+                    arg(audioInfo.sampleRate),
+                    2);
 
                 auto stack = timeline->getStack();
                 _printIndented(ftk::Format("stack \"{0}\" ({1}, {2}):").
                     arg(stack->name).
                     arg(core::to_string(stack->startTime)).
                     arg(core::to_string(stack->duration)),
-                    indent);
-                indent += 2;
+                    2);
 
                 for (const auto& stackChild : stack->children)
                 {
                     if (auto track = std::dynamic_pointer_cast<timeline::Track>(stackChild))
                     {
-                        _printTrack(readSystem, track, indent);
+                        _printTrack(readSystem, track, 4);
                     }
                 }
             }

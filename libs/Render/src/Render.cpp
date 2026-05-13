@@ -156,16 +156,9 @@ namespace tl
             for (const auto& input : inputs)
             {
                 OIIO::ImageBuf wrapped = wrap(*input);
-                if (3 == wrapped.spec().nchannels)
-                {
-                    // Add an alpha channel.
-                    const int channelOrder[] = { 0, 1, 2, -1 };
-                    const float channelValues[] = { 0, 0, 0, 1.0 };
-                    const std::string channelNames[] = { "", "", "", "A" };
-                    wrapped = OIIO::ImageBufAlgo::channels(wrapped, 4, channelOrder, channelValues, channelNames);
-                }
+                OIIO::ImageBuf alphaed = addAlpha(wrapped);
                 OIIO::ImageBuf p;
-                if (!OIIO::ImageBufAlgo::premult(p, wrapped))
+                if (!OIIO::ImageBufAlgo::premult(p, alphaed))
                 {
                     throw std::runtime_error(OIIO::geterror());
                 }

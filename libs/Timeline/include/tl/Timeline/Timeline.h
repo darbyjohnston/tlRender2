@@ -7,6 +7,7 @@
 #include <tl/Core/Audio.h>
 
 #include <ftk/Core/Context.h>
+#include <ftk/Core/Image.h>
 #include <ftk/Core/Observable.h>
 
 namespace tl
@@ -98,6 +99,12 @@ namespace tl
             //! Observe the timeline duration.
             std::shared_ptr<ftk::IObservable<core::Duration> > observeDuration() const;
             
+            //! Get video information.
+            const std::pair<ftk::Size2I, ftk::ImageType>& getVideoInfo() const;
+
+            //! Get audio information.
+            const core::AudioInfo& getAudioInfo() const;
+
             //! Get the timeline stack.
             const std::shared_ptr<Stack>& getStack() const;
 

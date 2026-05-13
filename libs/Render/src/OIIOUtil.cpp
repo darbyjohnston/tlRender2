@@ -5,6 +5,8 @@
 
 #include <ftk/Core/Format.h>
 
+#include <OpenImageIO/imagebufalgo.h>
+
 namespace tl
 {
     namespace render
@@ -140,6 +142,28 @@ namespace tl
                 throw std::runtime_error(OIIO::geterror());
             }
             return out;
+        }
+        
+        OIIO::ImageBuf addAlpha(const OIIO::ImageBuf& input)
+        {
+            const int n = input.spec().nchannels;
+            if (n == 1)
+            {
+                // L → LA
+                const int order[] = { 0, -1 };
+                const float values[] = { 0, 1.0f };
+                const std::string names[] = { "", "A" };
+                return OIIO::ImageBufAlgo::channels(input, 2, order, values, names);
+            }
+            if (n == 3)
+            {
+                // RGB → RGBA
+                const int order[] = { 0, 1, 2, -1 };
+                const float values[] = { 0, 0, 0, 1.0f };
+                const std::string names[] = { "", "", "", "A" };
+                return OIIO::ImageBufAlgo::channels(input, 4, order, values, names);
+            }
+            return input;
         }
     }
 }

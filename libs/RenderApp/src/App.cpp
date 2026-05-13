@@ -149,6 +149,17 @@ namespace tl
             }
         }
 
+        void App::_printOpFields(const timeline::SolidColorVideo& op, int indent)
+        {
+            _printIndented(ftk::Format("size: {0}x{1}").
+                arg(op.size.w).arg(op.size.h), indent);
+            _printIndented(ftk::Format("type: {0}").
+                arg(ftk::getLabel(op.type)), indent);
+            _printIndented(ftk::Format("color: ({0}, {1}, {2}, {3})").
+                arg(op.color[0]).arg(op.color[1]).
+                arg(op.color[2]).arg(op.color[3]), indent);
+        }
+
         void App::_printOpFields(const timeline::ReadVideo& op, int indent)
         {
             if (op.media)

@@ -11,6 +11,12 @@ namespace tl
 {
     namespace render
     {
+        //! Convert to OIIO.
+        OIIO::TypeDesc toOIIO(ftk::ImageType);
+        
+        //! Convert from OIIO.
+        ftk::ImageType fromOIIO(const OIIO::ImageSpec&);
+
         //! Wrap an ftk::Image as an OIIO::ImageBuf without copying pixels.
         //! The returned ImageBuf borrows the ftk::Image's memory; the
         //! caller must keep the ftk::Image alive for the ImageBuf's

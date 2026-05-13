@@ -11,91 +11,88 @@ namespace tl
 {
     namespace render
     {
-        namespace
+        OIIO::TypeDesc toOIIO(ftk::ImageType value)
         {
-            OIIO::TypeDesc toOIIO(ftk::ImageType value)
+            switch (value)
             {
-                switch (value)
+            case ftk::ImageType::L_U8:
+            case ftk::ImageType::LA_U8:
+            case ftk::ImageType::RGB_U8:
+            case ftk::ImageType::RGBA_U8:    return OIIO::TypeDesc::UINT8;
+            case ftk::ImageType::L_U16:
+            case ftk::ImageType::LA_U16:
+            case ftk::ImageType::RGB_U16:
+            case ftk::ImageType::RGBA_U16:   return OIIO::TypeDesc::UINT16;
+            case ftk::ImageType::L_U32:
+            case ftk::ImageType::LA_U32:
+            case ftk::ImageType::RGB_U32:
+            case ftk::ImageType::RGBA_U32:   return OIIO::TypeDesc::UINT32;
+            case ftk::ImageType::L_F16:
+            case ftk::ImageType::LA_F16:
+            case ftk::ImageType::RGB_F16:
+            case ftk::ImageType::RGBA_F16:   return OIIO::TypeDesc::HALF;
+            case ftk::ImageType::L_F32:
+            case ftk::ImageType::LA_F32:
+            case ftk::ImageType::RGB_F32:
+            case ftk::ImageType::RGBA_F32:   return OIIO::TypeDesc::FLOAT;
+            default: break;
+            }
+            return OIIO::TypeDesc();
+        }
+
+        ftk::ImageType fromOIIO(const OIIO::ImageSpec& spec)
+        {
+            const int n = spec.nchannels;
+            const auto bt = spec.format.basetype;
+            if (1 == n)
+            {
+                switch (bt)
                 {
-                case ftk::ImageType::L_U8:
-                case ftk::ImageType::LA_U8:
-                case ftk::ImageType::RGB_U8:
-                case ftk::ImageType::RGBA_U8:    return OIIO::TypeDesc::UINT8;
-                case ftk::ImageType::L_U16:
-                case ftk::ImageType::LA_U16:
-                case ftk::ImageType::RGB_U16:
-                case ftk::ImageType::RGBA_U16:   return OIIO::TypeDesc::UINT16;
-                case ftk::ImageType::L_U32:
-                case ftk::ImageType::LA_U32:
-                case ftk::ImageType::RGB_U32:
-                case ftk::ImageType::RGBA_U32:   return OIIO::TypeDesc::UINT32;
-                case ftk::ImageType::L_F16:
-                case ftk::ImageType::LA_F16:
-                case ftk::ImageType::RGB_F16:
-                case ftk::ImageType::RGBA_F16:   return OIIO::TypeDesc::HALF;
-                case ftk::ImageType::L_F32:
-                case ftk::ImageType::LA_F32:
-                case ftk::ImageType::RGB_F32:
-                case ftk::ImageType::RGBA_F32:   return OIIO::TypeDesc::FLOAT;
+                case OIIO::TypeDesc::UINT8:  return ftk::ImageType::L_U8;
+                case OIIO::TypeDesc::UINT16: return ftk::ImageType::L_U16;
+                case OIIO::TypeDesc::UINT32: return ftk::ImageType::L_U32;
+                case OIIO::TypeDesc::HALF:   return ftk::ImageType::L_F16;
+                case OIIO::TypeDesc::FLOAT:  return ftk::ImageType::L_F32;
                 default: break;
                 }
-                return OIIO::TypeDesc();
             }
-
-            ftk::ImageType fromOIIO(const OIIO::ImageSpec& spec)
+            else if (2 == n)
             {
-                const int n = spec.nchannels;
-                const auto bt = spec.format.basetype;
-                if (1 == n)
+                switch (bt)
                 {
-                    switch (bt)
-                    {
-                    case OIIO::TypeDesc::UINT8:  return ftk::ImageType::L_U8;
-                    case OIIO::TypeDesc::UINT16: return ftk::ImageType::L_U16;
-                    case OIIO::TypeDesc::UINT32: return ftk::ImageType::L_U32;
-                    case OIIO::TypeDesc::HALF:   return ftk::ImageType::L_F16;
-                    case OIIO::TypeDesc::FLOAT:  return ftk::ImageType::L_F32;
-                    default: break;
-                    }
+                case OIIO::TypeDesc::UINT8:  return ftk::ImageType::LA_U8;
+                case OIIO::TypeDesc::UINT16: return ftk::ImageType::LA_U16;
+                case OIIO::TypeDesc::UINT32: return ftk::ImageType::LA_U32;
+                case OIIO::TypeDesc::HALF:   return ftk::ImageType::LA_F16;
+                case OIIO::TypeDesc::FLOAT:  return ftk::ImageType::LA_F32;
+                default: break;
                 }
-                else if (2 == n)
-                {
-                    switch (bt)
-                    {
-                    case OIIO::TypeDesc::UINT8:  return ftk::ImageType::LA_U8;
-                    case OIIO::TypeDesc::UINT16: return ftk::ImageType::LA_U16;
-                    case OIIO::TypeDesc::UINT32: return ftk::ImageType::LA_U32;
-                    case OIIO::TypeDesc::HALF:   return ftk::ImageType::LA_F16;
-                    case OIIO::TypeDesc::FLOAT:  return ftk::ImageType::LA_F32;
-                    default: break;
-                    }
-                }
-                else if (3 == n)
-                {
-                    switch (bt)
-                    {
-                    case OIIO::TypeDesc::UINT8:  return ftk::ImageType::RGB_U8;
-                    case OIIO::TypeDesc::UINT16: return ftk::ImageType::RGB_U16;
-                    case OIIO::TypeDesc::UINT32: return ftk::ImageType::RGB_U32;
-                    case OIIO::TypeDesc::HALF:   return ftk::ImageType::RGB_F16;
-                    case OIIO::TypeDesc::FLOAT:  return ftk::ImageType::RGB_F32;
-                    default: break;
-                    }
-                }
-                else if (n >= 4)
-                {
-                    switch (bt)
-                    {
-                    case OIIO::TypeDesc::UINT8:  return ftk::ImageType::RGBA_U8;
-                    case OIIO::TypeDesc::UINT16: return ftk::ImageType::RGBA_U16;
-                    case OIIO::TypeDesc::UINT32: return ftk::ImageType::RGBA_U32;
-                    case OIIO::TypeDesc::HALF:   return ftk::ImageType::RGBA_F16;
-                    case OIIO::TypeDesc::FLOAT:  return ftk::ImageType::RGBA_F32;
-                    default: break;
-                    }
-                }
-                return ftk::ImageType::None;
             }
+            else if (3 == n)
+            {
+                switch (bt)
+                {
+                case OIIO::TypeDesc::UINT8:  return ftk::ImageType::RGB_U8;
+                case OIIO::TypeDesc::UINT16: return ftk::ImageType::RGB_U16;
+                case OIIO::TypeDesc::UINT32: return ftk::ImageType::RGB_U32;
+                case OIIO::TypeDesc::HALF:   return ftk::ImageType::RGB_F16;
+                case OIIO::TypeDesc::FLOAT:  return ftk::ImageType::RGB_F32;
+                default: break;
+                }
+            }
+            else if (n >= 4)
+            {
+                switch (bt)
+                {
+                case OIIO::TypeDesc::UINT8:  return ftk::ImageType::RGBA_U8;
+                case OIIO::TypeDesc::UINT16: return ftk::ImageType::RGBA_U16;
+                case OIIO::TypeDesc::UINT32: return ftk::ImageType::RGBA_U32;
+                case OIIO::TypeDesc::HALF:   return ftk::ImageType::RGBA_F16;
+                case OIIO::TypeDesc::FLOAT:  return ftk::ImageType::RGBA_F32;
+                default: break;
+                }
+            }
+            return ftk::ImageType::None;
         }
 
         OIIO::ImageBuf wrap(const ftk::Image& image)

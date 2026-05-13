@@ -5,22 +5,35 @@
 
 #include <tl/Timeline/Media.h>
 
+#include <ftk/Core/Image.h>
+
+#include <array>
 #include <variant>
 
 namespace tl
 {
     namespace timeline
     {
+        //! Generate a solid-color image. Used to introduce a sized canvas
+        //! into the graph (typically as the bottom of a composite stack).
+        struct SolidColorVideo
+        {
+            static constexpr const char* typeName = "SolidColorVideo";
+            ftk::Size2I             size;
+            ftk::ImageType          type = ftk::ImageType::RGBA_U8;
+            std::array<float, 4>    color = { 0.0f, 0.0f, 0.0f, 0.0f };
+        };
+
         //! Read video data.
         struct ReadVideo
         {
             static constexpr const char* typeName = "ReadVideo";
-            std::shared_ptr<Media> media;
-            core::MediaTime sourceTime;
-            std::string referenceKey = defaultMediaReference;
+            std::shared_ptr<Media>  media;
+            core::MediaTime         sourceTime;
+            std::string             referenceKey = defaultMediaReference;
         };
 
-        //! Composite multiple inputs.
+        //! Composite multiple inputs (back-to-front, alpha over).
         struct CompositeVideo
         {
             static constexpr const char* typeName = "CompositeVideo";
@@ -43,6 +56,7 @@ namespace tl
 
         //! Video operation variants.
         using VideoOp = std::variant<
+            SolidColorVideo,
             ReadVideo,
             CompositeVideo,
             DissolveVideo,

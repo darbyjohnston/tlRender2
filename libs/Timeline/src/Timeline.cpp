@@ -280,14 +280,14 @@ namespace tl
                                     {
                                         audioInfo = info.audio.front();
                                         audioFound = true;
+                                        break;
                                     }
-                                    break;
                                 }
                             }
+                        if (audioFound)
+                            break;
                         }
                     }
-                    if (audioFound)
-                        break;
                 }
             }
         }
@@ -476,10 +476,10 @@ namespace tl
         std::shared_ptr<VideoGraph> Timeline::getVideo(const Time& time)
         {
             FTK_P();
-    
+
             // Stack-time relative to stack origin
             const core::Time stackTime = { time.frames - p.stack->startTime.frames };
-    
+
             // Collect active reads across all video tracks.
             std::vector<VideoNodePtr> reads;
             for (const auto& child : p.stack->children)
@@ -496,7 +496,7 @@ namespace tl
                 {
                     continue;
                 }
-                
+
                 // Find the active clip
                 if (auto active = findActiveClip(track, trackTime))
                 {
@@ -507,24 +507,32 @@ namespace tl
                     }
                 }
             }
-            if (reads.empty())
+
+            // Build the canvas node. Always RGBA internally so the renderer can
+            // composite with alpha; output type conversion happens at render
+            // time via the videoInfo on subsequent materialize steps. Color
+            // defaults to fully transparent.
+            auto canvas = std::make_shared<VideoNode>();
+            canvas->op = SolidColorVideo{
+                p.videoInfo.size,
+                p.videoInfo.type,
+                { 0.0f, 0.0f, 0.0f, 0.0f }
+            };
+
+            // Always wrap in a composite, even when there's just a canvas (empty
+            // frame) or one read. Keeps the graph shape uniform: every getVideo
+            // returns Composite(canvas, reads...).
+            auto comp = std::make_shared<VideoNode>();
+            comp->op = CompositeVideo{};
+            comp->inputs.reserve(1 + reads.size());
+            comp->inputs.push_back(std::move(canvas));
+            for (auto& read : reads)
             {
-                return nullptr;
+                comp->inputs.push_back(std::move(read));
             }
-            
+
             auto graph = std::make_shared<VideoGraph>();
-            if (reads.size() == 1)
-            {
-                graph->root = reads[0];
-            }
-            else
-            {
-                auto comp = std::make_shared<VideoNode>();
-                comp->op = CompositeVideo{};
-                comp->inputs = std::move(reads);
-                graph->root = comp;
-            }
-            
+            graph->root = std::move(comp);
             return graph;
         }
 

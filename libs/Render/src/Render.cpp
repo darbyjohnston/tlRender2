@@ -30,6 +30,8 @@ namespace tl
             std::shared_ptr<ftk::Image> renderNode(
                 const timeline::VideoNodePtr&);
 
+            std::shared_ptr<ftk::Image> renderSolidColor(
+                const timeline::SolidColorVideo&);
             std::shared_ptr<ftk::Image> renderRead(
                 const timeline::ReadVideo&);
             std::shared_ptr<ftk::Image> renderComposite(
@@ -106,7 +108,11 @@ namespace tl
             return std::visit([&](auto&& op) -> std::shared_ptr<ftk::Image>
             {
                 using T = std::decay_t<decltype(op)>;
-                if constexpr (std::is_same_v<T, timeline::ReadVideo>)
+                if constexpr (std::is_same_v<T, timeline::SolidColorVideo>)
+                {
+                    return renderSolidColor(op);
+                }
+                else if constexpr (std::is_same_v<T, timeline::ReadVideo>)
                 {
                     return renderRead(op);
                 }
@@ -123,6 +129,27 @@ namespace tl
                     return renderColorTransform(op, inputs);
                 }
             }, node->op);
+        }
+
+        std::shared_ptr<ftk::Image> VideoRenderer::Private::renderSolidColor(
+            const timeline::SolidColorVideo& op)
+        {
+            OIIO::ImageSpec spec(
+                op.size.w,
+                op.size.h,
+                ftk::getChannelCount(op.type),
+                toOIIO(op.type));
+            OIIO::ImageBuf buf(spec);
+
+            const float color[4] = {
+                op.color[0], op.color[1], op.color[2], op.color[3]
+            };
+            if (!OIIO::ImageBufAlgo::fill(buf, color))
+            {
+                throw std::runtime_error(OIIO::geterror());
+            }
+
+            return materialize(buf);
         }
 
         std::shared_ptr<ftk::Image> VideoRenderer::Private::renderRead(
@@ -148,13 +175,18 @@ namespace tl
                 return inputs[0];
             }
 
-            // Wrap inputs as ImageBufs and premultiply alpha (PNG and most
-            // file formats store non-premultiplied). over() expects
-            // premultiplied input.
+            // The first input (typically a SolidColorVideo canvas)
+            // determines the output type.
+            const ftk::ImageType outputType = inputs[0]->getInfo().type;
+
+            // Wrap and premultiply each input. Inputs without alpha
+            // (RGB, L) are promoted to RGBA/LA before compositing.
             std::vector<OIIO::ImageBuf> premultiplied;
             premultiplied.reserve(inputs.size());
             for (const auto& input : inputs)
             {
+                if (!input) continue;
+
                 OIIO::ImageBuf wrapped = wrap(*input);
                 OIIO::ImageBuf alphaed = addAlpha(wrapped);
                 OIIO::ImageBuf p;
@@ -164,9 +196,13 @@ namespace tl
                 }
                 premultiplied.push_back(std::move(p));
             }
+            if (premultiplied.empty())
+            {
+                return nullptr;
+            }
 
-            // Fold over() from bottom to top. inputs[0] is bottom of stack,
-            // inputs.back() is top (matches OTIO stack semantics).
+            // Fold over() from bottom to top. inputs[0] is the canvas at
+            // the bottom, inputs.back() is the top of the stack.
             OIIO::ImageBuf result = std::move(premultiplied[0]);
             for (size_t i = 1; i < premultiplied.size(); ++i)
             {
@@ -181,8 +217,8 @@ namespace tl
                 result = std::move(composited);
             }
 
-            // Unpremultiply for output, since downstream consumers
-            // (PNG writers, etc.) expect non-premultiplied alpha.
+            // Unpremultiply for output (most file formats expect
+            // non-premultiplied alpha).
             OIIO::ImageBuf finalBuf;
             if (!OIIO::ImageBufAlgo::unpremult(finalBuf, result))
             {

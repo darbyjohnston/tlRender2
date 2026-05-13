@@ -50,6 +50,7 @@ namespace tl
             void _printVideoNode(
                 const std::shared_ptr<timeline::VideoNode>&,
                 int indent);
+            void _printOpFields(const timeline::SolidColorVideo& op, int indent);
             void _printOpFields(const timeline::ReadVideo& op, int indent);
             void _printOpFields(const timeline::CompositeVideo&, int indent);
             void _printOpFields(const timeline::DissolveVideo& op, int indent);

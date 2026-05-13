@@ -46,6 +46,7 @@ namespace tl
             auto timeline2 = timeline::Timeline::create(context, path2);
             auto renderer2 = render::VideoRenderer::create(context);
 
+            // Sample every 10th frame; parity should hold for all frames.
             for (core::Time t = timeline->getStartTime();
                 t < timeline->getStartTime() + timeline->getDuration();
                 t.frames = t.frames + 10)
@@ -57,7 +58,7 @@ namespace tl
                 FTK_ASSERT(graph2);
                 auto image = renderer->render(*graph);
                 FTK_ASSERT(image);
-                auto image2 = renderer->render(*graph2);
+                auto image2 = renderer2->render(*graph2);
                 FTK_ASSERT(image2);
                 FTK_ASSERT(image->getInfo() == image2->getInfo());
                 FTK_ASSERT(render::compare(image, image2));

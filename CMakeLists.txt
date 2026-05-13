@@ -74,11 +74,12 @@ option(TL_BUILD_TESTS "Build the tlRender2 tests" OFF)
 
 find_package(Threads)
 
+set(ftk_API "GL_4_1" CACHE STRING "Graphics API (GL_4_1, GL_4_1_Debug, GLES_2)")
 set(ftk_INSTALL OFF CACHE BOOL "" FORCE)
 set(ftk_TESTS OFF CACHE BOOL "" FORCE)
 set(ftk_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/feather-tk EXCLUDE_FROM_ALL)
-# \todo Move these aliases to feather-tk
+# \todo Move these to feather-tk
 if(NOT TARGET ftk::ftkCore)
     add_library(ftk::ftkCore ALIAS ftkCore)
 endif()

@@ -5,9 +5,11 @@ target_sources(tlUI
         include/tl/UI/TimeUnitsModel.h
         include/tl/UI/TimeUnitsWidget.h
         include/tl/UI/TimelineWidget.h
+        include/tl/UI/Viewport.h
         src/TimeUnitsModel.cpp
         src/TimeUnitsWidget.cpp
-        src/TimelineWidget.cpp)
+        src/TimelineWidget.cpp
+        src/Viewport.cpp)
 
 target_include_directories(tlUI
     PUBLIC

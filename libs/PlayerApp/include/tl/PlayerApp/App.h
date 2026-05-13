@@ -3,7 +3,9 @@
 
 #pragma once
 
+#include <tl/UI/TimeUnitsModel.h>
 #include <tl/Timeline/Timeline.h>
+#include <tl/Timeline/Player.h>
 
 #include <ftk/UI/App.h>
 
@@ -15,20 +17,20 @@ namespace tl
         class MainWindow;
 
         //! Command line.
-        struct CmdLine
+        struct TL_API_TYPE CmdLine
         {
             std::shared_ptr<ftk::CmdLineArg<std::string> > input;
         };
 
         //! Application.
-        class App : public ftk::App
+        class TL_API_TYPE App : public ftk::App
         {
         protected:
             void _init(
                 const std::shared_ptr<ftk::Context>&,
                 const std::vector<std::string>&);
 
-            App() = default;
+            App();
 
         public:
             virtual ~App();
@@ -37,11 +39,19 @@ namespace tl
                 const std::shared_ptr<ftk::Context>&,
                 const std::vector<std::string>&);
 
+            //! Get the time units model.
+            const std::shared_ptr<ui::TimeUnitsModel>& getTimeUnitsModel() const;
+            
+            //! Get the timeline.
+            const std::shared_ptr<timeline::Timeline>& getTimeline() const;
+
+            //! Get the player.
+            const std::shared_ptr<timeline::Player>& getPlayer() const;
+
             void run() override;
 
         private:
-            CmdLine _cmdLine;
-            std::shared_ptr<MainWindow> _mainWindow;
+            FTK_PRIVATE();
         };
     }
 }

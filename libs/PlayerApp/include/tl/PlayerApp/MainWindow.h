@@ -30,7 +30,7 @@ namespace tl
             static std::shared_ptr<MainWindow> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<App>&);
-            
+
         private:
             FTK_PRIVATE();
         };

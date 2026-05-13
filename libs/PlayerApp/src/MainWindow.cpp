@@ -4,6 +4,10 @@
 #include <tl/PlayerApp/MainWindow.h>
 
 #include <tl/PlayerApp/App.h>
+#include <tl/UI/Viewport.h>
+#include <tl/UI/TimelineWidget.h>
+
+#include <ftk/UI/RowLayout.h>
 
 namespace tl
 {
@@ -11,13 +15,29 @@ namespace tl
     {
         struct MainWindow::Private
         {
+            std::shared_ptr<ui::Viewport> viewport;
+            std::shared_ptr<ui::TimelineWidget> timelineWidget;
+            std::shared_ptr<ftk::VerticalLayout> layout;
         };
 
         void MainWindow::_init(
             const std::shared_ptr<ftk::Context>& context,
             const std::shared_ptr<App>& app)
         {
-            ftk::MainWindow::_init(context, app, ftk::Size2I(1920, 1080));
+            ftk::MainWindow::_init(context, app, ftk::Size2I(1280, 720));
+            FTK_P();
+            
+            p.viewport = ui::Viewport::create(context);
+            p.viewport->setVStretch(ftk::Stretch::Expanding);
+
+            p.timelineWidget = ui::TimelineWidget::create(
+                context,
+                app->getTimeUnitsModel());
+
+            p.layout = ftk::VerticalLayout::create(context);
+            p.viewport->setParent(p.layout);
+            p.timelineWidget->setParent(p.layout);
+            setWidget(p.layout);
         }
 
         MainWindow::MainWindow() :

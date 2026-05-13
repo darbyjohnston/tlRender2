@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Copyright Contributors to the tlRender project.
 
+#include <RenderTest/RenderTest.h>
 #include <TimelineTest/TimelineTest.h>
-
 #include <IOTest/AudioResampleTest.h>
-
 #include <CoreTest/AudioTest.h>
 #include <CoreTest/TimeTest.h>
+
+#include <tl/Timeline/Init.h>
 
 #include <ftk/Core/Context.h>
 #include <ftk/Core/String.h>
@@ -24,6 +25,7 @@ int main(int argc, char** argv)
     try
     {
         auto context = ftk::Context::create();
+        tl::timeline::init(context);
 
         // Build the list of tests.
         std::vector<std::shared_ptr<ftk::test::ITest> > tests;
@@ -31,6 +33,7 @@ int main(int argc, char** argv)
         tests.push_back(tl::core_test::AudioTest::create(context));
         tests.push_back(tl::io_test::AudioResampleTest::create(context));
         tests.push_back(tl::timeline_test::TimelineTest::create(context));
+        tests.push_back(tl::render_test::RenderTest::create(context));
 
         // Optional command-line filter: any argument is matched
         // case-insensitively against the test name.

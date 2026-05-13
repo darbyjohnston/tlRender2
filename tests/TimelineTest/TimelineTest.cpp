@@ -28,7 +28,6 @@ namespace tl
         void TimelineTest::run()
         {
             _create();
-            _getVideo();
         }
 
         void TimelineTest::_create()
@@ -55,22 +54,6 @@ namespace tl
                         FTK_ASSERT(clip);
                         FTK_ASSERT(1 == clip->mediaReferences.size());
                     }
-                }
-            }
-        }
-
-        void TimelineTest::_getVideo()
-        {
-            auto context = _context.lock();
-            {
-                const ftk::Path path(TL_TEST_DATA_DIR, "MultipleClips.otio");
-                auto timeline = timeline::Timeline::create(context, path);
-                for (core::Time t = timeline->getStartTime();
-                    t < timeline->getStartTime() + timeline->getDuration();
-                    ++t.frames)
-                {
-                    auto graph = timeline->getVideo(t);
-                    FTK_ASSERT(graph);
                 }
             }
         }

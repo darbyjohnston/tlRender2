@@ -7,23 +7,23 @@
 
 namespace tl
 {
-    namespace timeline_test
+    namespace render_test
     {
-        class TimelineTest : public ftk::test::ITest
+        class RenderTest : public ftk::test::ITest
         {
         protected:
-            TimelineTest(const std::shared_ptr<ftk::Context>&);
+            RenderTest(const std::shared_ptr<ftk::Context>&);
 
         public:
-            virtual ~TimelineTest();
+            virtual ~RenderTest();
 
-            static std::shared_ptr<TimelineTest> create(
+            static std::shared_ptr<RenderTest> create(
                 const std::shared_ptr<ftk::Context>&);
 
             void run() override;
 
         private:
-            void _create();
+            void _render();
         };
     }
 }

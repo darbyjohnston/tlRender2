@@ -164,7 +164,7 @@ namespace tl
                     arg(videoInfo.type),
                     2);
                 const auto& audioInfo = timeline->getAudioInfo();
-                _printIndented(ftk::Format("audio: {0} {1} {2}").
+                _printIndented(ftk::Format("audio: {0}ch {1} {2}kHz").
                     arg(audioInfo.channelCount).
                     arg(audioInfo.type).
                     arg(audioInfo.sampleRate),

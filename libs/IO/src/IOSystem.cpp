@@ -6,10 +6,8 @@
 #if defined(TL_IO_HAS_FFMPEG)
 #include "FFmpegRead.h"
 #endif // TL_IO_HAS_FFMPEG
-#if defined(TL_IO_HAS_OIIO)
 #include "OIIORead.h"
 #include "OIIOWrite.h"
-#endif // TL_IO_HAS_OIIO
 
 #include <ftk/Core/Context.h>
 #include <ftk/Core/Format.h>
@@ -32,9 +30,7 @@ namespace tl
         {
             FTK_P();
             auto logSystem = context->getLogSystem();
-#if defined(TL_IO_HAS_OIIO)
             addPlugin(OIIOReadPlugin::create(logSystem));
-#endif // TL_IO_HAS_OIIO
 #if defined(TL_IO_HAS_FFMPEG)
             addPlugin(FFmpegReadPlugin::create(logSystem));
 #endif // TL_IO_HAS_FFMPEG
@@ -104,9 +100,7 @@ namespace tl
         {
             FTK_P();
             auto logSystem = context->getLogSystem();
-#if defined(TL_IO_HAS_OIIO)
             addPlugin(OIIOWritePlugin::create(logSystem));
-#endif // TL_IO_HAS_OIIO
         }
 
         WriteSystem::~WriteSystem()

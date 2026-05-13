@@ -3,9 +3,11 @@ add_library(tlRender)
 target_sources(tlRender
     PRIVATE
         include/tl/Render/Render.h
+        include/tl/Render/RenderUtil.h
         src/OIIOUtil.cpp
         src/OIIOUtil.h
-        src/Render.cpp)
+        src/Render.cpp
+        src/RenderUtil.cpp)
 
 target_include_directories(tlRender
     PUBLIC

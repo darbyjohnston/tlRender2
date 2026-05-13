@@ -4,7 +4,9 @@
 #include <RenderTest/RenderTest.h>
 
 #include <tl/Render/Render.h>
+#include <tl/Render/RenderUtil.h>
 #include <tl/Timeline/Timeline.h>
+#include <tl/IO/IOSystem.h>
 
 #include <ftk/Core/Assert.h>
 #include <ftk/Core/Format.h>
@@ -37,6 +39,7 @@ namespace tl
             auto context = _context.lock();
             const ftk::Path path(TL_TEST_DATA_DIR, "Overlay.otio");
             auto timeline = timeline::Timeline::create(context, path);
+            const auto& rate = timeline->getRate();
             auto renderer = render::VideoRenderer::create(context);
 
             const ftk::Path path2(TL_TEST_DATA_DIR, "Overlay.otioz");
@@ -45,18 +48,19 @@ namespace tl
 
             for (core::Time t = timeline->getStartTime();
                 t < timeline->getStartTime() + timeline->getDuration();
-                ++t.frames)
+                t.frames = t.frames + 10)
             {
                 _print(ftk::Format("render frame: {0}").arg(core::to_string(t)));
                 auto graph = timeline->getVideo(t);
                 FTK_ASSERT(graph);
-                auto graph2 = timeline->getVideo(t);
+                auto graph2 = timeline2->getVideo(t);
                 FTK_ASSERT(graph2);
                 auto image = renderer->render(*graph);
                 FTK_ASSERT(image);
                 auto image2 = renderer->render(*graph2);
                 FTK_ASSERT(image2);
                 FTK_ASSERT(image->getInfo() == image2->getInfo());
+                FTK_ASSERT(render::compare(image, image2));
             }
         }
     }

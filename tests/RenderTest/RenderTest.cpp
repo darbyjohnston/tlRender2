@@ -39,7 +39,6 @@ namespace tl
             auto context = _context.lock();
             const ftk::Path path(TL_TEST_DATA_DIR, "Overlay.otio");
             auto timeline = timeline::Timeline::create(context, path);
-            const auto& rate = timeline->getRate();
             auto renderer = render::VideoRenderer::create(context);
 
             const ftk::Path path2(TL_TEST_DATA_DIR, "Overlay.otioz");

@@ -4,10 +4,12 @@
 #include <tl/PlayerApp/MainWindow.h>
 
 #include <tl/PlayerApp/App.h>
-#include <tl/UI/Viewport.h>
-#include <tl/UI/TimelineWidget.h>
+#include <tl/PlayerApp/DocumentWidget.h>
 
-#include <ftk/UI/RowLayout.h>
+#include <ftk/UI/Action.h>
+#include <ftk/UI/FileBrowser.h>
+#include <ftk/UI/Menu.h>
+#include <ftk/UI/MenuBar.h>
 
 namespace tl
 {
@@ -15,9 +17,7 @@ namespace tl
     {
         struct MainWindow::Private
         {
-            std::shared_ptr<ui::Viewport> viewport;
-            std::shared_ptr<ui::TimelineWidget> timelineWidget;
-            std::shared_ptr<ftk::VerticalLayout> layout;
+            std::weak_ptr<App> app;
         };
 
         void MainWindow::_init(
@@ -26,18 +26,37 @@ namespace tl
         {
             ftk::MainWindow::_init(context, app, ftk::Size2I(1280, 720));
             FTK_P();
-            
-            p.viewport = ui::Viewport::create(context);
-            p.viewport->setVStretch(ftk::Stretch::Expanding);
 
-            p.timelineWidget = ui::TimelineWidget::create(
-                context,
-                app->getTimeUnitsModel());
+            p.app = app;
 
-            p.layout = ftk::VerticalLayout::create(context);
-            p.viewport->setParent(p.layout);
-            p.timelineWidget->setParent(p.layout);
-            setWidget(p.layout);
+            auto menuBar = getMenuBar();
+            auto fileMenu = menuBar->getMenu("File");
+            fileMenu->clear();
+            std::weak_ptr<App> appWeak(app);
+            std::weak_ptr<MainWindow> windowWeak(
+                std::dynamic_pointer_cast<MainWindow>(shared_from_this()));
+            fileMenu->addAction(ftk::Action::create(                
+                "Open",
+                "FileOpen",
+                ftk::KeyShortcut(ftk::Key::O, ftk::commandKeyModifier),
+                [this, appWeak, windowWeak]
+                {
+                    auto fileBrowserSystem = appWeak.lock()->getContext()->getSystem<ftk::FileBrowserSystem>();
+                    fileBrowserSystem->open(
+                        windowWeak.lock(),
+                        [appWeak](const ftk::Path& value)
+                        {
+                            appWeak.lock()->open(std::filesystem::u8path(value.get()));
+                        });
+                }));
+            fileMenu->addDivider();
+            fileMenu->addAction(ftk::Action::create(
+                "Quit",
+                ftk::KeyShortcut(ftk::Key::Q, ftk::commandKeyModifier),
+                [appWeak]
+                {
+                    appWeak.lock()->exit();
+                }));
         }
 
         MainWindow::MainWindow() :
@@ -54,6 +73,12 @@ namespace tl
             auto out = std::shared_ptr<MainWindow>(new MainWindow);
             out->_init(context, app);
             return out;
+        }
+
+        void MainWindow::setPlayer(const std::shared_ptr<timeline::Player>& player)
+        {
+            FTK_P();
+            setWidget(DocumentWidget::create(getContext(), p.app.lock(), player));
         }
     }
 }

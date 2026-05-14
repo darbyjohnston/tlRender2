@@ -4,6 +4,7 @@
 #pragma once
 
 #include <tl/UI/TimeUnitsModel.h>
+#include <tl/Timeline/Player.h>
 
 #include <ftk/UI/IMouseWidget.h>
 
@@ -18,6 +19,7 @@ namespace tl
             void _init(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<TimeUnitsModel>&,
+                const std::shared_ptr<timeline::Player>&,
                 const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
             TimelineWidget();
@@ -29,9 +31,13 @@ namespace tl
             static std::shared_ptr<TimelineWidget> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<TimeUnitsModel>&,
+                const std::shared_ptr<timeline::Player>&,
                 const std::shared_ptr<IWidget>& parent = nullptr);
             
-        private:
+            ftk::Size2I getSizeHint() const override;
+            void setGeometry(const ftk::Box2I&) override;
+
+            private:
             FTK_PRIVATE();
         };
     }

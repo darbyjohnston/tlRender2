@@ -3,8 +3,10 @@ add_library(tlPlayerApp)
 target_sources(tlPlayerApp
     PRIVATE
         include/tl/PlayerApp/App.h
+        include/tl/PlayerApp/DocumentWidget.h
         include/tl/PlayerApp/MainWindow.h
         src/App.cpp
+        src/DocumentWidget.cpp
         src/MainWindow.cpp)
 
 target_include_directories(tlPlayerApp
@@ -14,7 +16,7 @@ target_include_directories(tlPlayerApp
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-target_link_libraries(tlPlayerApp PUBLIC tlUI)
+target_link_libraries(tlPlayerApp PUBLIC tlUI tlRender)
 
 target_compile_features(tlPlayerApp PUBLIC cxx_std_17)
 

@@ -79,13 +79,6 @@ set(ftk_INSTALL OFF CACHE BOOL "" FORCE)
 set(ftk_TESTS OFF CACHE BOOL "" FORCE)
 set(ftk_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/feather-tk EXCLUDE_FROM_ALL)
-# \todo Move these to feather-tk
-if(NOT TARGET ftk::ftkCore)
-    add_library(ftk::ftkCore ALIAS ftkCore)
-endif()
-if(NOT TARGET ftk::ftkUI)
-    add_library(ftk::ftkUI ALIAS ftkUI)
-endif()
 
 set(OTIO_CXX_INSTALL ON CACHE BOOL "" FORCE)
 set(OTIO_FIND_IMATH ON CACHE BOOL "" FORCE)

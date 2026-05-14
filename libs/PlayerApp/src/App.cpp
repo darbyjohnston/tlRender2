@@ -4,12 +4,16 @@
 #include <tl/PlayerApp/App.h>
 
 #include <tl/PlayerApp/MainWindow.h>
+#include <tl/Render/Render.h>
 
+#include <ftk/UI/DialogSystem.h>
 #include <ftk/Core/Context.h>
 #include <ftk/Core/Format.h>
 
 namespace tl
 {
+    using namespace core;
+
     namespace player_app
     {
         struct App::Private
@@ -18,7 +22,11 @@ namespace tl
             std::shared_ptr<ui::TimeUnitsModel> timeUnitsModel;
             std::shared_ptr<timeline::Timeline> timeline;
             std::shared_ptr<timeline::Player> player;
+            std::shared_ptr<render::VideoRenderer> renderer;
+            std::shared_ptr<ftk::Observable<std::shared_ptr<ftk::Image>>> videoFrame;
             std::shared_ptr<MainWindow> mainWindow;
+
+            std::shared_ptr<ftk::Observer<Time>> timeObserver;
         };
 
         void App::_init(
@@ -29,7 +37,8 @@ namespace tl
 
             p.cmdLine.input = ftk::CmdLineArg<std::string>::create(
                 "input",
-                "Input timeline or media file.");
+                "Input timeline or media file.",
+                true);
 
             ftk::App::_init(
                 context,
@@ -39,8 +48,6 @@ namespace tl
                 {
                     p.cmdLine.input
                 });
-            
-            p.timeUnitsModel = ui::TimeUnitsModel::create(context);
         }
 
         App::App() :
@@ -67,19 +74,49 @@ namespace tl
         void App::run()
         {
             FTK_P();
-
-            ftk::Path path(p.cmdLine.input->getValue());
-            p.timeline = timeline::Timeline::create(_context, path);
             
-            p.player = timeline::Player::create(_context, p.timeline);
+            p.timeUnitsModel = ui::TimeUnitsModel::create(_context);
+
+            p.renderer = render::VideoRenderer::create(_context);
+            p.videoFrame = ftk::Observable<std::shared_ptr<ftk::Image>>::create();
 
             p.mainWindow = MainWindow::create(
                 _context,
                 std::dynamic_pointer_cast<App>(shared_from_this()));
-
+            
             ftk::App::run();
         }
-            
+
+        void App::open(const std::string& value)
+        {
+            FTK_P();
+            try
+            {
+                p.timeObserver.reset();
+                p.player.reset();
+                p.timeline.reset();
+
+                ftk::Path path(value);
+                p.timeline = timeline::Timeline::create(_context, path);            
+                p.player = timeline::Player::create(_context, p.timeline);
+
+                p.timeObserver = ftk::Observer<Time>::create(
+                    p.player->observeTime(),
+                    [this](const Time& value)
+                    {
+                        _render(value);
+                    });
+            }
+            catch (const std::exception& e)
+            {
+                _context->getSystem<ftk::DialogSystem>()->message(
+                    "ERROR",
+                    e.what(),
+                    p.mainWindow);
+            }
+            p.mainWindow->setPlayer(p.player);
+        }
+
         const std::shared_ptr<timeline::Timeline>& App::getTimeline() const
         {
             return _p->timeline;
@@ -88,6 +125,20 @@ namespace tl
         const std::shared_ptr<timeline::Player>& App::getPlayer() const
         {
             return _p->player;
+        }
+
+        std::shared_ptr<ftk::IObservable<std::shared_ptr<ftk::Image>>> App::observeVideoFrame() const
+        {
+            return _p->videoFrame;
+        }
+
+        void App::_render(const Time& time)
+        {
+            FTK_P();
+            if (auto graph = p.timeline->getVideo(time))
+            {
+                p.videoFrame->setIfChanged(p.renderer->render(*graph));
+            }
         }
     }
 }

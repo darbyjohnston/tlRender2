@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <tl/Core/Export.h>
+#include <tl/Timeline/Player.h>
 
 #include <ftk/UI/MainWindow.h>
 
@@ -30,6 +30,9 @@ namespace tl
             static std::shared_ptr<MainWindow> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<App>&);
+
+            //! Set the player.
+            void setPlayer(const std::shared_ptr<timeline::Player>&);
 
         private:
             FTK_PRIVATE();

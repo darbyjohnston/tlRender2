@@ -21,7 +21,6 @@ namespace tl
         {
             std::shared_ptr<ftk::Observable<ftk::ImageOptions> > imageOptions;
             std::shared_ptr<ftk::Observable<ftk::gl::TextureType> > colorBuffer;
-            std::shared_ptr<timeline::Player> player;
             std::shared_ptr<ftk::Image> videoFrame;
             std::shared_ptr<ftk::Observable<ftk::V2I> > viewPos;
             std::shared_ptr<ftk::Observable<double> > zoom;
@@ -60,8 +59,6 @@ namespace tl
                 ftk::V2I viewPos;
             };
             MouseData mouse;
-
-            std::shared_ptr<ftk::Observer<std::shared_ptr<ftk::Image>>> videoFrameObserver;
         };
 
         void Viewport::_init(
@@ -141,53 +138,17 @@ namespace tl
             }
         }
 
-        const std::shared_ptr<timeline::Player>& Viewport::getPlayer() const
+        const std::shared_ptr<ftk::Image>& Viewport::getVideoFrame() const
         {
-            return _p->player;
+            return _p->videoFrame;
         }
 
-        void Viewport::setPlayer(const std::shared_ptr<timeline::Player>& value)
+        void Viewport::setVideoFrame(const std::shared_ptr<ftk::Image>& value)
         {
             FTK_P();
-
-            p.videoFrameObserver.reset();
-
-            p.player = value;
-
-            if (p.player)
-            {
-                /*p.videoFrameObserver = ftk::ListObserver<VideoFrame>::create(
-                    p.player->observeCurrentVideo(),
-                    [this](const std::vector<VideoFrame>& value)
-                    {
-                        FTK_P();
-                        p.videoFrame = value;
-
-                        if (p.fpsData.has_value())
-                        {
-                            p.fpsData->frameCount = p.fpsData->frameCount + 1;
-                            const auto now = std::chrono::steady_clock::now();
-                            const std::chrono::duration<double> diff = now - p.fpsData->timer;
-                            if (diff.count() > 1.0)
-                            {
-                                const double fps = p.fpsData->frameCount / diff.count();
-                                //std::cout << "FPS: " << fps << std::endl;
-                                p.fps->setIfChanged(fps);
-                                p.fpsData->timer = now;
-                                p.fpsData->frameCount = 0;
-                            }
-                        }
-
-                        p.doRender = true;
-                        setDrawUpdate();
-                    });*/
-            }
-            else if (p.videoFrame)
-            {
-                p.videoFrame.reset();
-                p.doRender = true;
-                setDrawUpdate();
-            }
+            p.videoFrame = value;
+            p.doRender = true;
+            setDrawUpdate();
         }
 
         const ftk::V2I& Viewport::getViewPos() const

@@ -15,6 +15,8 @@ namespace tl
     {
         struct DocumentWidget::Private
         {
+            std::shared_ptr<render::Session> session;
+
             std::shared_ptr<ui::Viewport> viewport;
             std::shared_ptr<ui::TimelineWidget> timelineWidget;
             std::shared_ptr<ftk::VerticalLayout> layout;
@@ -25,10 +27,12 @@ namespace tl
         void DocumentWidget::_init(
             const std::shared_ptr<ftk::Context>& context,
             const std::shared_ptr<App>& app,
-            const std::shared_ptr<timeline::Player>& player)
+            const std::shared_ptr<render::Session>& session)
         {
             ftk::IWidget::_init(context, "tl::player_app::DocumentWidget", nullptr);
             FTK_P();
+
+            p.session = session;
 
             p.viewport = ui::Viewport::create(context);
             p.viewport->setVStretch(ftk::Stretch::Expanding);
@@ -36,7 +40,7 @@ namespace tl
             p.timelineWidget = ui::TimelineWidget::create(
                 context,
                 app->getTimeUnitsModel(),
-                player);
+                session->getPlayer());
 
             p.layout = ftk::VerticalLayout::create(context, shared_from_this());
             p.layout->setSpacingRole(ftk::SizeRole::None);
@@ -61,10 +65,10 @@ namespace tl
         std::shared_ptr<DocumentWidget> DocumentWidget::create(
             const std::shared_ptr<ftk::Context>& context,
             const std::shared_ptr<App>& app,
-            const std::shared_ptr<timeline::Player>& player)
+            const std::shared_ptr<render::Session>& session)
         {
             auto out = std::shared_ptr<DocumentWidget>(new DocumentWidget);
-            out->_init(context, app, player);
+            out->_init(context, app, session);
             return out;
         }
 

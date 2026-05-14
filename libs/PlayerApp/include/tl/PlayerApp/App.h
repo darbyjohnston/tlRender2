@@ -4,10 +4,9 @@
 #pragma once
 
 #include <tl/UI/TimeUnitsModel.h>
-#include <tl/Timeline/Timeline.h>
-#include <tl/Timeline/Player.h>
 
 #include <ftk/UI/App.h>
+#include <ftk/Core/Path.h>
 
 namespace tl
 {
@@ -45,20 +44,13 @@ namespace tl
             //! Open a file.
             void open(const ftk::Path&);
 
-            //! Get the timeline.
-            const std::shared_ptr<timeline::Timeline>& getTimeline() const;
-
-            //! Get the player.
-            const std::shared_ptr<timeline::Player>& getPlayer() const;
-
             //! Observe the video frame.
             std::shared_ptr<ftk::IObservable<std::shared_ptr<ftk::Image>>> observeVideoFrame() const;
 
             void run() override;
+            void tick() override;
 
         private:
-            void _render(const core::Time&);
-
             FTK_PRIVATE();
         };
     }

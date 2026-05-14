@@ -75,10 +75,10 @@ namespace tl
             return out;
         }
 
-        void MainWindow::setPlayer(const std::shared_ptr<timeline::Player>& player)
+        void MainWindow::setSession(const std::shared_ptr<render::Session>& session)
         {
             FTK_P();
-            setWidget(DocumentWidget::create(getContext(), p.app.lock(), player));
+            setWidget(DocumentWidget::create(getContext(), p.app.lock(), session));
         }
     }
 }

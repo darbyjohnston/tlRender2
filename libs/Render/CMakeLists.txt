@@ -4,10 +4,12 @@ target_sources(tlRender
     PRIVATE
         include/tl/Render/Render.h
         include/tl/Render/RenderUtil.h
+        include/tl/Render/Session.h
         src/OIIOUtil.cpp
         src/OIIOUtil.h
         src/Render.cpp
-        src/RenderUtil.cpp)
+        src/RenderUtil.cpp
+        src/Session.cpp)
 
 target_include_directories(tlRender
     PUBLIC

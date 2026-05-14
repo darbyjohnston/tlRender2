@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <tl/Timeline/Player.h>
+#include <tl/Render/Session.h>
 
 #include <ftk/UI/MainWindow.h>
 
@@ -31,8 +31,8 @@ namespace tl
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<App>&);
 
-            //! Set the player.
-            void setPlayer(const std::shared_ptr<timeline::Player>&);
+            //! Set the session.
+            void setSession(const std::shared_ptr<render::Session>&);
 
         private:
             FTK_PRIVATE();

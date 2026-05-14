@@ -139,9 +139,9 @@ namespace tl
             // Default-constructed.
             {
                 const core::MediaRate r;
-                FTK_ASSERT(r.num == 1);
-                FTK_ASSERT(r.den == 24);
-                FTK_ASSERT(r.isValid());
+                FTK_ASSERT(r.num == 0);
+                FTK_ASSERT(r.den == 0);
+                FTK_ASSERT(!r.isValid());
             }
             // Equality and inequality.
             {

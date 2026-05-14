@@ -5,6 +5,8 @@ target_sources(tlRender
         include/tl/Render/Render.h
         include/tl/Render/RenderUtil.h
         include/tl/Render/Session.h
+        src/Inbox.h
+        src/Inbox.cpp
         src/OIIOUtil.cpp
         src/OIIOUtil.h
         src/Render.cpp

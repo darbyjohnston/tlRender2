@@ -23,6 +23,7 @@ namespace tl
             std::shared_ptr<ftk::CmdLineFlag> info;
             std::shared_ptr<ftk::CmdLineFlag> print;
             std::shared_ptr<ftk::CmdLineOption<int>> frame;
+            std::shared_ptr<ftk::CmdLineOption<int>> requests;
         };
 
         //! Application.

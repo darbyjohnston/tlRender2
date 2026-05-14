@@ -3,9 +3,13 @@
 
 #include <tl/Render/Session.h>
 
+#include "Inbox.h"
+
 #include <tl/Render/Render.h>
 #include <tl/Timeline/Player.h>
 #include <tl/Timeline/Timeline.h>
+
+#include <thread>
 
 namespace tl
 {
@@ -15,19 +19,38 @@ namespace tl
     {
         struct Session::Private
         {
+            std::shared_ptr<ftk::LogSystem> logSystem;
             std::shared_ptr<timeline::Timeline> timeline;
             std::shared_ptr<timeline::Player> player;
             std::shared_ptr<render::VideoRenderer> renderer;
+            std::unique_ptr<IInbox> inbox;
+            std::thread worker;
+
+            void workerLoop();
         };
 
         void Session::_init(
             const std::shared_ptr<ftk::Context>& context,
-            const ftk::Path& path)
+            const ftk::Path& path,
+            RequestPolicy policy)
         {
             FTK_P();
+            p.logSystem = context->getSystem<ftk::LogSystem>();
             p.timeline = timeline::Timeline::create(context, path);            
             p.player = timeline::Player::create(context, p.timeline);
             p.renderer = render::VideoRenderer::create(context);
+
+            switch (policy)
+            {
+            case RequestPolicy::LatestWins:
+                p.inbox = createLatestWinsInbox();
+                break;
+            case RequestPolicy::All:
+                p.inbox = createAllInbox();
+                break;
+            }
+
+            p.worker = std::thread([this] { _p->workerLoop(); });
         }
 
         Session::Session() :
@@ -35,14 +58,25 @@ namespace tl
         {}
 
         Session::~Session()
-        {}
+        {
+            FTK_P();
+            if (p.inbox)
+            {
+                p.inbox->shutdown();
+            }
+            if (p.worker.joinable())
+            {
+                p.worker.join();
+            }
+        }
 
         std::shared_ptr<Session> Session::create(
             const std::shared_ptr<ftk::Context>& context,
-            const ftk::Path& path)
+            const ftk::Path& path,
+            RequestPolicy policy)
         {
             auto out = std::shared_ptr<Session>(new Session);
-            out->_init(context, path);
+            out->_init(context, path, policy);
             return out;
         }
 
@@ -59,16 +93,40 @@ namespace tl
         std::future<std::shared_ptr<ftk::Image>> Session::render(const Time& time)
         {
             FTK_P();
-            std::promise<std::shared_ptr<ftk::Image>> out;
-            std::shared_ptr<ftk::Image> videoFrame;
-            auto graph = p.timeline->getVideo(time);
-            out.set_value(p.renderer->render(*graph));
-            return out.get_future();
+            Request req;
+            req.time = time;
+            req.graph = p.timeline->getVideo(time);
+            auto future = req.promise.get_future();
+            p.inbox->submit(std::move(req));
+            return future;
         }
 
         std::shared_ptr<timeline::VideoGraph> Session::getGraph(const core::Time& time)
         {
             return _p->timeline->getVideo(time);            
+        }
+
+        void Session::Private::workerLoop()
+        {
+            while (auto req = inbox->wait_and_pop())
+            {
+                std::shared_ptr<ftk::Image> result;
+                try
+                {
+                    if (req->graph)
+                    {
+                        result = renderer->render(*req->graph);
+                    }
+                }
+                catch (const std::exception& e)
+                {
+                    logSystem->print(
+                        "tl::render::Session",
+                        std::string("Render error: ") + e.what(),
+                        ftk::LogType::Error);
+                }
+                req->promise.set_value(std::move(result));
+            }
         }
     }
 }

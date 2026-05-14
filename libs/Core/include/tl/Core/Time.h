@@ -31,7 +31,7 @@ namespace tl
         struct TL_API_TYPE MediaRate
         {
             MediaRate() = default;
-            constexpr MediaRate(int num, int dev = 1);
+            constexpr MediaRate(int num, int den = 1);
 
             int num = 0;
             int den = 0;
@@ -81,7 +81,7 @@ namespace tl
         ///@{
 
         constexpr Time operator + (const Time& t, const Duration& d);
-        constexpr Time operator + (const Duration& d, Time t);
+        constexpr Time operator + (const Duration& d, const Time& t);
         constexpr Time operator - (const Time& t, const Duration& d);
 
         constexpr Duration operator - (const Time& a, const Time& b);

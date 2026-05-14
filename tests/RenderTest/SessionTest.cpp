@@ -3,6 +3,7 @@
 
 #include <RenderTest/SessionTest.h>
 
+#include <tl/Render/RenderUtil.h>
 #include <tl/Render/Session.h>
 
 #include <ftk/Core/Assert.h>

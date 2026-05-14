@@ -15,6 +15,19 @@ namespace tl
 {
     namespace render
     {
+        //! Policy for how the Session handles render requests.
+        enum class TL_API_TYPE RequestPolicy
+        {
+            //! Single-slot inbox: a new request replaces any pending one.
+            //! Superseded requests resolve with nullptr. For interactive
+            //! playback where only the most recent frame matters.
+            LatestWins,
+
+            //! FIFO inbox: every request is rendered in submission order.
+            //! For batch rendering where every frame's output is consumed.
+            All,
+        };
+
         //! Render session.
         class TL_API_TYPE Session
         {
@@ -23,7 +36,8 @@ namespace tl
         protected:
             void _init(
                 const std::shared_ptr<ftk::Context>&,
-                const ftk::Path&);
+                const ftk::Path&,
+                RequestPolicy);
 
             Session();
 
@@ -33,7 +47,8 @@ namespace tl
             //! Create a new render session.
             static std::shared_ptr<Session> create(
                 const std::shared_ptr<ftk::Context>&,
-                const ftk::Path&);
+                const ftk::Path&,
+                RequestPolicy = RequestPolicy::LatestWins);
 
             //! Get the timeline.
             const std::shared_ptr<timeline::Timeline>& getTimeline() const;

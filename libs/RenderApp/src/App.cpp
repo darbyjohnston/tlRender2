@@ -36,6 +36,12 @@ namespace tl
                 { "-frame" },
                 "Render the given frame.");
 
+            _cmdLine.requests = ftk::CmdLineOption<int>::create(
+                { "-requests" },
+                "Number of requests to make in parallel.",
+                "",
+                1);
+
             IApp::_init(
                 context,
                 argv,
@@ -48,7 +54,8 @@ namespace tl
                 {
                     _cmdLine.info,
                     _cmdLine.print,
-                    _cmdLine.frame
+                    _cmdLine.frame,
+                    _cmdLine.requests
                 });
         }
 
@@ -72,7 +79,10 @@ namespace tl
             try
             {
                 ftk::Path inputPath(_cmdLine.input->getValue());
-                auto session = render::Session::create(_context, inputPath);
+                auto session = render::Session::create(
+                    _context,
+                    inputPath,
+                    render::RequestPolicy::All);
                 auto timeline = session->getTimeline();
                 const auto rate = timeline->getRate();
 
@@ -95,7 +105,7 @@ namespace tl
                     _printIndented(ftk::Format("audio: {0}ch {1} {2}kHz").
                         arg(audioInfo.channelCount).
                         arg(audioInfo.type).
-                        arg(audioInfo.sampleRate),
+                        arg(audioInfo.sampleRate / 1000),
                         2);
                 }
 
@@ -110,18 +120,26 @@ namespace tl
                     startT = timeline->getStartTime();
                     endT = startT + timeline->getDuration();
                 }
-                for (core::Time t = startT; t < endT; ++t.frames)
+                core::Time t = startT;
+                while (t < endT)
                 {
-                    if (_cmdLine.info->found() || _cmdLine.print->found())
-                        _printIndented(ftk::Format("frame: {0}").
-                            arg(core::to_string(t)),
-                            0);
-                    if (_cmdLine.print->found())
-                        _printVideoNode(session->getGraph(t)->root, 2);
-
-                    if (auto image = session->render(t).get())
+                    std::vector<std::future<std::shared_ptr<ftk::Image>>> requests;
+                    for (int i = 0;
+                        i < _cmdLine.requests->getValue() && t < endT;
+                        ++i, ++t.frames)
                     {
-                        writer->writeVideo(core::mediaTime(t, rate), image);
+                        if (_cmdLine.info->found() || _cmdLine.print->found())
+                            _printIndented(ftk::Format("frame: {0}").
+                                arg(core::to_string(t)),
+                                0);
+                        if (_cmdLine.print->found())
+                            _printVideoNode(session->getGraph(t)->root, 2);
+
+                        requests.emplace_back(session->render(t));
+                    }
+                    for (auto& request : requests)
+                    {
+                        writer->writeVideo(core::mediaTime(t, rate), request.get());
                     }
                 }
             }

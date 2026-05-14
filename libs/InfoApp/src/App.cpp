@@ -167,7 +167,7 @@ namespace tl
                 _printIndented(ftk::Format("audio: {0}ch {1} {2}kHz").
                     arg(audioInfo.channelCount).
                     arg(audioInfo.type).
-                    arg(audioInfo.sampleRate),
+                    arg(audioInfo.sampleRate / 1000),
                     2);
 
                 auto stack = timeline->getStack();

@@ -87,21 +87,20 @@ namespace tl
             ftk::App::run();
         }
 
-        void App::open(const std::string& value)
+        void App::open(const ftk::Path& value)
         {
             FTK_P();
             try
             {
-                p.timeObserver.reset();
-                p.player.reset();
-                p.timeline.reset();
+                auto timeline = timeline::Timeline::create(_context, value);            
+                auto player = timeline::Player::create(_context, timeline);
 
-                ftk::Path path(value);
-                p.timeline = timeline::Timeline::create(_context, path);            
-                p.player = timeline::Player::create(_context, p.timeline);
+                p.timeline = timeline;
+                p.player = player;
+                p.mainWindow->setPlayer(player);
 
                 p.timeObserver = ftk::Observer<Time>::create(
-                    p.player->observeTime(),
+                    player->observeTime(),
                     [this](const Time& value)
                     {
                         _render(value);
@@ -114,7 +113,6 @@ namespace tl
                     e.what(),
                     p.mainWindow);
             }
-            p.mainWindow->setPlayer(p.player);
         }
 
         const std::shared_ptr<timeline::Timeline>& App::getTimeline() const

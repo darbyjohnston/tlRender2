@@ -46,7 +46,7 @@ namespace tl
                         windowWeak.lock(),
                         [appWeak](const ftk::Path& value)
                         {
-                            appWeak.lock()->open(std::filesystem::u8path(value.get()));
+                            appWeak.lock()->open(value);
                         });
                 }));
             fileMenu->addDivider();

@@ -43,7 +43,7 @@ namespace tl
             const std::shared_ptr<ui::TimeUnitsModel>& getTimeUnitsModel() const;
             
             //! Open a file.
-            void open(const std::string&);
+            void open(const ftk::Path&);
 
             //! Get the timeline.
             const std::shared_ptr<timeline::Timeline>& getTimeline() const;

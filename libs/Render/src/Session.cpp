@@ -61,11 +61,8 @@ namespace tl
             FTK_P();
             std::promise<std::shared_ptr<ftk::Image>> out;
             std::shared_ptr<ftk::Image> videoFrame;
-            if (auto graph = p.timeline->getVideo(time))
-            {
-                videoFrame = p.renderer->render(*graph);
-            }
-            out.set_value(videoFrame);
+            auto graph = p.timeline->getVideo(time);
+            out.set_value(p.renderer->render(*graph));
             return out.get_future();
         }
     }

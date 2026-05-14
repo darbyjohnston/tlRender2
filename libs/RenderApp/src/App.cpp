@@ -3,7 +3,7 @@
 
 #include <tl/RenderApp/App.h>
 
-#include <tl/Render/Render.h>
+#include <tl/Render/Session.h>
 
 #include <ftk/Core/Context.h>
 #include <ftk/Core/Format.h>
@@ -67,13 +67,12 @@ namespace tl
             try
             {
                 ftk::Path inputPath(_cmdLine.input->getValue());
-                auto timeline = timeline::Timeline::create(_context, inputPath);
+                auto session = render::Session::create(_context, inputPath);
+                auto timeline = session->getTimeline();
                 const auto rate = timeline->getRate();
 
                 ftk::Path outputPath(_cmdLine.output->getValue());
                 auto writer = _context->getSystem<io::WriteSystem>()->write(outputPath);
-
-                auto renderer = render::VideoRenderer::create(_context);
 
                 if (_cmdLine.info->found())
                 {
@@ -111,19 +110,10 @@ namespace tl
                     _printIndented(ftk::Format("frame: {0}").
                         arg(core::to_string(t)),
                         2);
-                    
-                    if (auto graph = timeline->getVideo(t))
+
+                    if (auto image = session->render(t).get())
                     {
-                        if (_cmdLine.info->found())
-                        {
-                            _printIndented("graph:", 4);
-                            _printVideoNode(graph->root, 6);
-                        }
-                        
-                        if (auto image = renderer->render(*graph))
-                        {
-                            writer->writeVideo(core::mediaTime(t, rate), image);
-                        }
+                        writer->writeVideo(core::mediaTime(t, rate), image);
                     }
                 }
             }

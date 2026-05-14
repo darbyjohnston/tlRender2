@@ -1,8 +1,10 @@
 set(HEADERS
-    RenderTest.h)
+    RenderTest.h
+    SessionTest.h)
 
 set(SOURCE
-    RenderTest.cpp)
+    RenderTest.cpp
+    SessionTest.cpp)
 
 add_library(tlRenderTest ${HEADERS} ${SOURCE})
 target_link_libraries(tlRenderTest PUBLIC tlRender ftkTestLib)

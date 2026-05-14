@@ -2,6 +2,7 @@
 // Copyright Contributors to the tlRender project.
 
 #include <RenderTest/RenderTest.h>
+#include <RenderTest/SessionTest.h>
 #include <TimelineTest/TimelineTest.h>
 #include <IOTest/AudioResampleTest.h>
 #include <CoreTest/AudioTest.h>
@@ -34,6 +35,7 @@ int main(int argc, char** argv)
         tests.push_back(tl::io_test::AudioResampleTest::create(context));
         tests.push_back(tl::timeline_test::TimelineTest::create(context));
         tests.push_back(tl::render_test::RenderTest::create(context));
+        tests.push_back(tl::render_test::SessionTest::create(context));
 
         // Optional command-line filter: any argument is matched
         // case-insensitively against the test name.

@@ -74,17 +74,7 @@ option(TL_BUILD_TESTS "Build the tlRender2 tests" OFF)
 
 find_package(Threads)
 
-set(ftk_API "GL_4_1" CACHE STRING "Graphics API (GL_4_1, GL_4_1_Debug, GLES_2)")
-set(ftk_INSTALL OFF CACHE BOOL "" FORCE)
-set(ftk_TESTS OFF CACHE BOOL "" FORCE)
-set(ftk_EXAMPLES OFF CACHE BOOL "" FORCE)
-add_subdirectory(third_party/feather-tk EXCLUDE_FROM_ALL)
-
-set(OTIO_CXX_INSTALL ON CACHE BOOL "" FORCE)
-set(OTIO_FIND_IMATH ON CACHE BOOL "" FORCE)
-set(OTIO_SHARED_LIBS ${BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
-set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-add_subdirectory(third_party/otio)
+add_subdirectory(third_party)
 
 ################################################################################
 # configuration
@@ -108,9 +98,6 @@ add_subdirectory(libs/UI)
 add_subdirectory(apps/tlinfo)
 add_subdirectory(apps/tlrender)
 add_subdirectory(apps/tlplayer)
-
-################################################################################
-# tests
 
 if(TL_BUILD_TESTS)
     enable_testing()

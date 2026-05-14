@@ -65,5 +65,10 @@ namespace tl
             out.set_value(p.renderer->render(*graph));
             return out.get_future();
         }
+
+        std::shared_ptr<timeline::VideoGraph> Session::getGraph(const core::Time& time)
+        {
+            return _p->timeline->getVideo(time);            
+        }
     }
 }

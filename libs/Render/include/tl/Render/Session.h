@@ -44,6 +44,9 @@ namespace tl
             //! Render a frame.
             std::future<std::shared_ptr<ftk::Image>> render(const core::Time&);
 
+            //! Get the render graph for a given frame.
+            std::shared_ptr<timeline::VideoGraph> getGraph(const core::Time&);
+
         private:
             FTK_PRIVATE();
         };

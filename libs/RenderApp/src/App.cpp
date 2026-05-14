@@ -26,7 +26,11 @@ namespace tl
 
             _cmdLine.info = ftk::CmdLineFlag::create(
                 { "-info" },
-                "Print information.");
+                "Print general information.");
+
+            _cmdLine.print = ftk::CmdLineFlag::create(
+                { "-print" },
+                "Print per-frame graphs.");
 
             _cmdLine.frame = ftk::CmdLineOption<int>::create(
                 { "-frame" },
@@ -43,6 +47,7 @@ namespace tl
                 },
                 {
                     _cmdLine.info,
+                    _cmdLine.print,
                     _cmdLine.frame
                 });
         }
@@ -107,9 +112,12 @@ namespace tl
                 }
                 for (core::Time t = startT; t < endT; ++t.frames)
                 {
-                    _printIndented(ftk::Format("frame: {0}").
-                        arg(core::to_string(t)),
-                        2);
+                    if (_cmdLine.info->found() || _cmdLine.print->found())
+                        _printIndented(ftk::Format("frame: {0}").
+                            arg(core::to_string(t)),
+                            0);
+                    if (_cmdLine.print->found())
+                        _printVideoNode(session->getGraph(t)->root, 2);
 
                     if (auto image = session->render(t).get())
                     {

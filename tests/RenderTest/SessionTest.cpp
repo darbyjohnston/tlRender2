@@ -14,7 +14,7 @@ namespace tl
     {
         SessionTest::SessionTest(
             const std::shared_ptr<ftk::Context>& context) :
-            ITest(context, "tl::Session_test::SessionTest")
+            ITest(context, "tl::render_test::SessionTest")
         {}
 
         SessionTest::~SessionTest()

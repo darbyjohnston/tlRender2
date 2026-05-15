@@ -2,13 +2,25 @@ add_library(tlUI)
 
 target_sources(tlUI
     PRIVATE
+        include/tl/UI/DurationEdit.h
+        include/tl/UI/DurationLabel.h
+        include/tl/UI/FrameButtons.h
+        include/tl/UI/PlaybackButtons.h
+        include/tl/UI/TimeEdit.h
+        include/tl/UI/TimeLabel.h
+        include/tl/UI/TimelineWidget.h
         include/tl/UI/TimeUnitsModel.h
         include/tl/UI/TimeUnitsWidget.h
-        include/tl/UI/TimelineWidget.h
         include/tl/UI/Viewport.h
+        src/DurationEdit.cpp
+        src/DurationLabel.cpp
+        src/FrameButtons.cpp
+        src/PlaybackButtons.cpp
+        src/TimeEdit.cpp
+        src/TimeLabel.cpp
+        src/TimelineWidget.cpp
         src/TimeUnitsModel.cpp
         src/TimeUnitsWidget.cpp
-        src/TimelineWidget.cpp
         src/Viewport.cpp)
 
 target_include_directories(tlUI

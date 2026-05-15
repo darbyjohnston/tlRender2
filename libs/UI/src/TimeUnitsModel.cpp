@@ -25,8 +25,8 @@ namespace tl
             "Seconds",
             "Timecode");
 
-        std::string timeToText(
-            const Time& time,
+        std::string framesToText(
+            Frame frames,
             const core::MediaRate& rate,
             TimeUnits units)
         {
@@ -35,18 +35,18 @@ namespace tl
             {
             case TimeUnits::Frames:
                 out = ftk::Format("{0}").
-                    arg(rate.isValid() ? time.frames : 0);
+                    arg(rate.isValid() ? frames : 0);
                 break;
             case TimeUnits::Seconds:
                 out = ftk::Format("{0}").
-                    arg(rate.isValid() ? mediaTime(time, rate).toSeconds() : 0.0, 2);
+                    arg(rate.isValid() ? MediaTime{ frames, rate }.toSeconds() : 0.0, 2);
                 break;
             case TimeUnits::Timecode:
             {
                 if (rate.isValid())
                 {
                     const otio::RationalTime otioTime(
-                        time.frames,
+                        frames,
                         rate.toDouble());
                     out = otioTime.to_timecode();
                 }
@@ -61,32 +61,36 @@ namespace tl
             return out;
         }
 
-        Time textToTime(
+        std::optional<Frame> textToFrames(
             const std::string& text,
             const core::MediaRate& rate,
             TimeUnits units)
         {
-            Time out;
+            std::optional<Frame> out;
             switch (units)
             {
             case TimeUnits::Frames:
             {
                 const int value = std::atoi(text.c_str());
                 const auto otioTime = otio::RationalTime::from_frames(value, rate.toDouble());
-                out.frames = otioTime.value();
+                out = static_cast<Frame>(otioTime.value());
                 break;
             }
             case TimeUnits::Seconds:
             {
                 const double value = std::atof(text.c_str());
                 const auto otioTime = otio::RationalTime::from_seconds(value).rescaled_to(rate.toDouble());
-                out.frames = otioTime.value();
+                out = static_cast<Frame>(otioTime.value());
                 break;
             }
             case TimeUnits::Timecode:
             {
-                const auto otioTime = otio::RationalTime::from_timecode(text, rate.toDouble());
-                out.frames = otioTime.value();
+                otio::ErrorStatus otioError;
+                const auto otioTime = otio::RationalTime::from_timecode(text, rate.toDouble(), &otioError);
+                if (!otio::is_error(otioError))
+                {
+                    out = static_cast<Frame>(otioTime.value());
+                }
                 break;
             }
             default: break;
@@ -175,7 +179,7 @@ namespace tl
 
         std::string TimeUnitsModel::getLabel(const Time& value, const MediaRate& rate) const
         {
-            return timeToText(value, rate, _p->timeUnits->get());
+            return framesToText(value.frames, rate, _p->timeUnits->get());
         }
     }
 }

@@ -3,9 +3,11 @@ add_library(tlPlayerApp)
 target_sources(tlPlayerApp
     PRIVATE
         include/tl/PlayerApp/App.h
+        include/tl/PlayerApp/BottomToolBar.h
         include/tl/PlayerApp/DocumentWidget.h
         include/tl/PlayerApp/MainWindow.h
         src/App.cpp
+        src/BottomToolBar.cpp
         src/DocumentWidget.cpp
         src/MainWindow.cpp)
 

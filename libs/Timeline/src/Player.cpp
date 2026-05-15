@@ -9,13 +9,33 @@ namespace tl
 
     namespace timeline
     {
+        TL_ENUM_IMPL(
+            Playback,
+            "Stop",
+            "Forward",
+            "Reverse");
+
+        TL_ENUM_IMPL(
+            FrameAction,
+            "Next",
+            "Next X10",
+            "Next X100",
+            "Prev X10",
+            "Prev X100",
+            "Prev",
+            "Start",
+            "End");
+
         struct Player::Private
         {
             std::shared_ptr<Timeline> timeline;
-            std::shared_ptr<ftk::Observable<Time> > startTime;
-            std::shared_ptr<ftk::Observable<Duration> > duration;
-            std::shared_ptr<ftk::Observable<Time> > time;
+            std::shared_ptr<ftk::Observable<MediaRate>> rate;
+            std::shared_ptr<ftk::Observable<Time>> startTime;
+            std::shared_ptr<ftk::Observable<Duration>> duration;
+            std::shared_ptr<ftk::Observable<Time>> time;
+            std::shared_ptr<ftk::Observable<Playback>> playback;
 
+            std::shared_ptr<ftk::Observer<MediaRate>> rateObserver;
             std::shared_ptr<ftk::Observer<Time>> startTimeObserver;
             std::shared_ptr<ftk::Observer<Duration>> durationObserver;
         };
@@ -26,9 +46,18 @@ namespace tl
         {
             FTK_P();
             p.timeline = timeline;
+            p.rate = ftk::Observable<MediaRate>::create();
             p.startTime = ftk::Observable<Time>::create();
             p.duration = ftk::Observable<Duration>::create();
             p.time = ftk::Observable<Time>::create();
+            p.playback = ftk::Observable<Playback>::create();
+
+            p.rateObserver = ftk::Observer<MediaRate>::create(
+                timeline->observeRate(),
+                [this](const MediaRate& value)
+                {
+                    _p->rate->setIfChanged(value);
+                });
 
             p.startTimeObserver = ftk::Observer<Time>::create(
                 timeline->observeStartTime(),
@@ -61,27 +90,32 @@ namespace tl
             return out;
         }
 
-        const core::MediaRate& Player::getRate() const
+        const MediaRate& Player::getRate() const
         {
             return _p->timeline->getRate();
         }
 
-        const core::Time& Player::getStartTime() const
+        std::shared_ptr<ftk::IObservable<MediaRate> > Player::observeRate() const
+        {
+            return _p->rate;
+        }
+
+        const Time& Player::getStartTime() const
         {
             return _p->startTime->get();
         }
 
-        std::shared_ptr<ftk::IObservable<core::Time> > Player::observeStartTime() const
+        std::shared_ptr<ftk::IObservable<Time> > Player::observeStartTime() const
         {
             return _p->startTime;
         }
 
-        const core::Duration& Player::getDuration() const
+        const Duration& Player::getDuration() const
         {
             return _p->duration->get();
         }
 
-        std::shared_ptr<ftk::IObservable<core::Duration> > Player::observeDuration() const
+        std::shared_ptr<ftk::IObservable<Duration> > Player::observeDuration() const
         {
             return _p->duration;
         }
@@ -102,6 +136,58 @@ namespace tl
             if (p.time->setIfChanged(value))
             {
             
+            }
+        }
+        
+        timeline::Playback Player::getPlayback() const
+        {
+            return _p->playback->get();
+        }
+
+        std::shared_ptr<ftk::IObservable<timeline::Playback> > Player::observePlayback() const
+        {
+            return _p->playback;
+        }
+        
+        void Player::setPlayback(timeline::Playback value)
+        {
+            FTK_P();
+            if (p.playback->setIfChanged(value))
+            {
+            
+            }
+        }
+
+        void Player::frameAction(timeline::FrameAction value)
+        {
+            FTK_P();
+            switch (value)
+            {
+            case timeline::FrameAction::Next:
+                setTime(getTime() + Duration{ 1 });
+                break;
+            case timeline::FrameAction::Next_X10:
+                setTime(getTime() + Duration{ 10 });
+                break;
+            case timeline::FrameAction::Next_X100:
+                setTime(getTime() + Duration{ 100 });
+                break;
+            case timeline::FrameAction::Prev:
+                setTime(getTime() - Duration{ 1 });
+                break;
+            case timeline::FrameAction::Prev_X10:
+                setTime(getTime() - Duration{ 10 });
+                break;
+            case timeline::FrameAction::Prev_X100:
+                setTime(getTime() - Duration{ 100 });
+                break;
+            case timeline::FrameAction::Start:
+                setTime(p.startTime->get());
+                break;
+            case timeline::FrameAction::End:
+                setTime(p.startTime->get() + p.duration->get() - Duration{ 1 });
+                break;
+            default: break;
             }
         }
     }

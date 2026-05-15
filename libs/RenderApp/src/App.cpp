@@ -123,10 +123,14 @@ namespace tl
                 core::Time t = startT;
                 while (t < endT)
                 {
-                    std::vector<std::future<std::shared_ptr<ftk::Image>>> requests;
+                    std::vector<std::pair<core::Time, std::future<std::shared_ptr<ftk::Image>>>> requests;
                     for (int i = 0;
                         i < _cmdLine.requests->getValue() && t < endT;
                         ++i, ++t.frames)
+                    {
+                        requests.emplace_back(t, session->render(t));
+                    }
+                    for (auto& [t, request] : requests)
                     {
                         if (_cmdLine.info->found() || _cmdLine.print->found())
                             _printIndented(ftk::Format("frame: {0}").
@@ -134,11 +138,6 @@ namespace tl
                                 0);
                         if (_cmdLine.print->found())
                             _printVideoNode(session->getGraph(t)->root, 2);
-
-                        requests.emplace_back(session->render(t));
-                    }
-                    for (auto& request : requests)
-                    {
                         writer->writeVideo(core::mediaTime(t, rate), request.get());
                     }
                 }

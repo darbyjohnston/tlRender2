@@ -65,7 +65,7 @@ namespace tl
             ftk::Path path;
             std::shared_ptr<ftk::FileIO> fileIO;
             std::map<std::string, ftk::MemFile> zipMem;
-            MediaRate rate = MediaRate(24);
+            std::shared_ptr<ftk::Observable<MediaRate> > rate;
             std::shared_ptr<ftk::Observable<Time> > startTime;
             std::shared_ptr<ftk::Observable<Duration> > duration;
             std::shared_ptr<Stack> stack;
@@ -77,12 +77,12 @@ namespace tl
 
         void Timeline::Private::readTimeline(OTIO_NS::Timeline* otioTimeline)
         {
-            rate = mediaDurationFromOTIO(otioTimeline->duration()).rate;
+            rate->setIfChanged(mediaDurationFromOTIO(otioTimeline->duration()).rate);
             startTime->setIfChanged(otioTimeline->global_start_time().has_value() ?
-                timeFromOTIO(otioTimeline->global_start_time().value(), rate.toDouble()) :
+                timeFromOTIO(otioTimeline->global_start_time().value(), rate->get().toDouble()) :
                 Time());
             duration->setIfChanged(
-                durationFromOTIO(otioTimeline->duration(), rate.toDouble()));
+                durationFromOTIO(otioTimeline->duration(), rate->get().toDouble()));
 
             auto otioStack = otioTimeline->tracks();
             stack->name = otioStack->name();
@@ -120,8 +120,8 @@ namespace tl
             }
             if (range.has_value())
             {
-                track->startTime = timeFromOTIO(range->start_time(), rate.toDouble());
-                track->duration = durationFromOTIO(range->duration(), rate.toDouble());
+                track->startTime = timeFromOTIO(range->start_time(), rate->get().toDouble());
+                track->duration = durationFromOTIO(range->duration(), rate->get().toDouble());
             }
             stack->children.push_back(track);
 
@@ -148,8 +148,8 @@ namespace tl
             }
             if (range.has_value())
             {
-                clip->startTime = timeFromOTIO(range->start_time(), rate.toDouble());
-                clip->duration = durationFromOTIO(range->duration(), rate.toDouble());
+                clip->startTime = timeFromOTIO(range->start_time(), rate->get().toDouble());
+                clip->duration = durationFromOTIO(range->duration(), rate->get().toDouble());
             }
             track->children.push_back(clip);
 
@@ -299,6 +299,7 @@ namespace tl
             FTK_P();
             p.context = context;
             p.path = path;
+            p.rate = ftk::Observable<MediaRate>::create(24);
             p.startTime = ftk::Observable<Time>::create();
             p.duration = ftk::Observable<Duration>::create();
             p.stack = std::make_shared<Stack>();
@@ -377,7 +378,7 @@ namespace tl
                 {
                     // Construct a timeline from the media.
                     const auto info = read->getInfo();
-                    p.rate = info.videoDuration.rate;
+                    p.rate->setIfChanged(info.videoDuration.rate);
 
                     auto media = std::make_shared<Media>();
                     media->path = path;
@@ -433,9 +434,24 @@ namespace tl
             return _p->path;
         }
 
+        const std::shared_ptr<Stack>& Timeline::getStack() const
+        {
+            return _p->stack;
+        }
+
         const core::MediaRate& Timeline::getRate() const
         {
+            return _p->rate->get();
+        }
+
+        std::shared_ptr<ftk::IObservable<core::MediaRate> > Timeline::observeRate() const
+        {
             return _p->rate;
+        }
+
+        void Timeline::setRate(const core::MediaRate& value)
+        {
+            _p->rate->setIfChanged(value);
         }
 
         const Time& Timeline::getStartTime() const
@@ -461,16 +477,6 @@ namespace tl
         const VideoInfo& Timeline::getVideoInfo() const
         {
             return _p->videoInfo;
-        }
-
-        const core::AudioInfo& Timeline::getAudioInfo() const
-        {
-            return _p->audioInfo;
-        }
-
-        const std::shared_ptr<Stack>& Timeline::getStack() const
-        {
-            return _p->stack;
         }
 
         std::shared_ptr<VideoGraph> Timeline::getVideo(const Time& time)
@@ -501,7 +507,7 @@ namespace tl
                 if (auto active = findActiveClip(track, trackTime))
                 {
                     const auto& [clip, clipTime] = *active;
-                    if (auto readNode = buildReadNode(clip, clipTime, p.rate))
+                    if (auto readNode = buildReadNode(clip, clipTime, p.rate->get()))
                     {
                         reads.push_back(readNode);
                     }
@@ -534,6 +540,11 @@ namespace tl
             auto graph = std::make_shared<VideoGraph>();
             graph->root = std::move(comp);
             return graph;
+        }
+
+        const core::AudioInfo& Timeline::getAudioInfo() const
+        {
+            return _p->audioInfo;
         }
 
         std::shared_ptr<Audio> Timeline::getAudio(int64_t seconds)

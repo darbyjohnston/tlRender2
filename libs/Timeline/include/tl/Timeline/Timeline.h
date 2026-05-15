@@ -96,36 +96,40 @@ namespace tl
             //! Get the path the timeline was loaded from, or an empty path if
             //! the timeline was created empty.
             const ftk::Path& getPath() const;
-            
-            //! Get the timeline rate.
-            const core::MediaRate& getRate() const;
-
-            //! Get the timeline start time.
-            const core::Time& getStartTime() const;
-
-            //! Observe the timeline start time.
-            std::shared_ptr<ftk::IObservable<core::Time> > observeStartTime() const;
-
-            //! Get the timeline duration.
-            const core::Duration& getDuration() const;
-
-            //! Observe the timeline duration.
-            std::shared_ptr<ftk::IObservable<core::Duration> > observeDuration() const;
-            
-            //! Get video information.
-            const VideoInfo& getVideoInfo() const;
-
-            //! Get audio information.
-            const core::AudioInfo& getAudioInfo() const;
 
             //! Get the timeline stack.
             const std::shared_ptr<Stack>& getStack() const;
 
-            //! Get the video graph for the given time.
+            //! \name Time
+            ///@{
+            
+            const core::MediaRate& getRate() const;
+            std::shared_ptr<ftk::IObservable<core::MediaRate> > observeRate() const;
+            void setRate(const core::MediaRate&);
+
+            const core::Time& getStartTime() const;
+            std::shared_ptr<ftk::IObservable<core::Time> > observeStartTime() const;
+
+            const core::Duration& getDuration() const;
+            std::shared_ptr<ftk::IObservable<core::Duration> > observeDuration() const;
+            
+            ///@}
+
+            //! \name Video
+            ///@{
+
+            const VideoInfo& getVideoInfo() const;
             std::shared_ptr<VideoGraph> getVideo(const core::Time&);
 
-            //! Get audio for the given seconds.
+            ///@}
+
+            //! \name Audio
+            ///@{
+
+            const core::AudioInfo& getAudioInfo() const;
             std::shared_ptr<core::Audio> getAudio(int64_t seconds);
+
+            ///@}
 
         private:
             FTK_PRIVATE();

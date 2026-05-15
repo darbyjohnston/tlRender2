@@ -3,7 +3,7 @@
 
 #include <tl/UI/TimelineWidget.h>
 
-#include <ftk/UI/IntEditSlider.h>
+#include <ftk/UI/IntSlider.h>
 #include <ftk/UI/RowLayout.h>
 
 namespace tl
@@ -17,7 +17,7 @@ namespace tl
             std::shared_ptr<TimeUnitsModel> timeUnitsModel;
             std::shared_ptr<timeline::Player> player;
 
-            std::shared_ptr<ftk::IntEditSlider> slider;
+            std::shared_ptr<ftk::IntSlider> slider;
             std::shared_ptr<ftk::HorizontalLayout> layout;
 
             std::shared_ptr<ftk::Observer<Time>> startTimeObserver;
@@ -37,7 +37,7 @@ namespace tl
             p.timeUnitsModel = timeUnitsModel;
             p.player = player;
 
-            p.slider = ftk::IntEditSlider::create(context);
+            p.slider = ftk::IntSlider::create(context);
 
             p.layout = ftk::HorizontalLayout::create(context, shared_from_this());
             p.layout->setMarginRole(ftk::SizeRole::MarginSmall);

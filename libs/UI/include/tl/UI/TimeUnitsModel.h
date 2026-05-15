@@ -25,14 +25,14 @@ namespace tl
         };
         TL_ENUM(TimeUnits);
 
-        //! Convert a time value to text.
-        TL_API std::string timeToText(
-            const core::Time&,
+        //! Convert a frame value to text.
+        TL_API std::string framesToText(
+            core::Frame,
             const core::MediaRate&,
             TimeUnits);
 
-        //! Convert text to a time value.
-        TL_API core::Time textToTime(
+        //! Convert text to a frame value.
+        TL_API std::optional<core::Frame> textToFrames(
             const std::string&     text,
             const core::MediaRate& rate,
             TimeUnits              units);

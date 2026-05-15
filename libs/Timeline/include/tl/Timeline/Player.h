@@ -9,6 +9,35 @@ namespace tl
 {
     namespace timeline
     {
+        //! Playback.
+        enum class TL_API_TYPE Playback
+        {
+            Stop,
+            Forward,
+            Reverse,
+
+            Count,
+            First = Stop
+        };
+        TL_ENUM(Playback);
+
+        //! Frame actions.
+        enum class TL_API_TYPE FrameAction
+        {
+            Next,
+            Next_X10,
+            Next_X100,
+            Prev,
+            Prev_X10,
+            Prev_X100,
+            Start,
+            End,
+
+            Count,
+            First = Next
+        };
+        TL_ENUM(FrameAction);
+    
         //! Timeline player.
         class TL_API_TYPE Player
         {
@@ -28,30 +57,40 @@ namespace tl
             static std::shared_ptr<Player> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<Timeline>&);
+
+            //! \name Time
+            ///@{
             
-            //! Get the timeline rate.
             const core::MediaRate& getRate() const;
+            std::shared_ptr<ftk::IObservable<core::MediaRate> > observeRate() const;
 
-            //! Get the timeline start time.
             const core::Time& getStartTime() const;
-
-            //! Observe the timeline start time.
             std::shared_ptr<ftk::IObservable<core::Time> > observeStartTime() const;
 
-            //! Get the timeline duration.
             const core::Duration& getDuration() const;
-
-            //! Observe the timeline duration.
             std::shared_ptr<ftk::IObservable<core::Duration> > observeDuration() const;
             
-            //! Get the current time.
             const core::Time& getTime() const;
-
-            //! Observe the current time.
             std::shared_ptr<ftk::IObservable<core::Time> > observeTime() const;
-            
-            //! Set the current time.
             void setTime(const core::Time&);
+
+            ///@}
+
+            //! \name Playback
+            ///@{
+
+            timeline::Playback getPlayback() const;
+            std::shared_ptr<ftk::IObservable<timeline::Playback> > observePlayback() const;
+            void setPlayback(timeline::Playback);
+
+            ///@}
+
+            //! \name Frame Actions
+            ///@{
+
+            void frameAction(timeline::FrameAction);
+
+            ///@}
 
         private:
             FTK_PRIVATE();

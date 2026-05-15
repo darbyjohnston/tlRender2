@@ -25,6 +25,8 @@ namespace tl
             core::Duration,
             double projectRate);
 
+        core::MediaRate mediaRateFromOTIO(double);
+
         core::MediaTime mediaTimeFromOTIO(
             const opentime::OPENTIME_VERSION_NS::RationalTime&);
         core::MediaDuration mediaDurationFromOTIO(

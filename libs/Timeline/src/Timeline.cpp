@@ -13,6 +13,7 @@
 
 #include <opentimelineio/clip.h>
 #include <opentimelineio/externalReference.h>
+#include <opentimelineio/imageSequenceReference.h>
 #include <opentimelineio/timeline.h>
 #include <opentimelineio/track.h>
 
@@ -59,6 +60,10 @@ namespace tl
                 const std::shared_ptr<Clip>&,
                 const std::string&,
                 OTIO_NS::ExternalReference*);
+            void readSeqRef(
+                const std::shared_ptr<Clip>&,
+                const std::string&,
+                OTIO_NS::ImageSequenceReference*);
             void readInfo();
 
             std::shared_ptr<ftk::Context> context;
@@ -157,10 +162,15 @@ namespace tl
             clip->activeMediaReference = otioClip->active_media_reference_key();
             for (const auto& refIt : otioClip->media_references())
             {
-                if (auto otioExternalRef =
+                if (auto otioExtRef =
                     dynamic_cast<OTIO_NS::ExternalReference*>(refIt.second))
                 {
-                    readExtRef(clip, refIt.first, otioExternalRef);
+                    readExtRef(clip, refIt.first, otioExtRef);
+                }
+                else if (auto otioSeqRef =
+                    dynamic_cast<OTIO_NS::ImageSequenceReference*>(refIt.second))
+                {
+                    readSeqRef(clip, refIt.first, otioSeqRef);
                 }
             }
         }
@@ -168,57 +178,121 @@ namespace tl
         void Timeline::Private::readExtRef(
             const std::shared_ptr<Clip>& clip,
             const std::string& name,
-            OTIO_NS::ExternalReference* otioExternalRef)
+            OTIO_NS::ExternalReference* otioExtRef)
         {
-            const std::string targetUrl = otioExternalRef->target_url();
+            auto mediaReference = std::make_shared<MediaReference>();
+            auto range = otioExtRef->available_range();
+            if (range.has_value())
+            {
+                mediaReference->availableRangeStart = mediaTimeFromOTIO(range->start_time());
+                mediaReference->availableRangeDuration = mediaDurationFromOTIO(range->duration());
+            }
+            clip->mediaReferences[name] = mediaReference;
 
+            const std::string targetUrl = otioExtRef->target_url();
             std::vector<ftk::MemFile> refMem;
             if (!zipMem.empty())
             {
                 auto it = zipMem.find(targetUrl);
-                if (it == zipMem.end())
-                {
-                    it = zipMem.find("media/" + targetUrl);
-                }
                 if (it != zipMem.end())
                 {
                     refMem.push_back(it->second);
                 }
             }
 
-            std::optional<ftk::Path> resolved;
+            std::string resolved;
             if (!refMem.empty())
             {
-                resolved = ftk::Path(path.get() + "/" + targetUrl);
+                resolved = path.get() + "/" + targetUrl;
             }
             else
             {
-                resolved = resolveExternalReference(targetUrl, timelineDir);
+                resolved = resolveRefURL(targetUrl, timelineDir);
             }
-            if (resolved)
+            const auto it = seen.find(targetUrl);
+            if (it != seen.end())
             {
-                auto mediaReference = std::make_shared<MediaReference>();
-                auto range = otioExternalRef->available_range();
-                if (range.has_value())
-                {
-                    mediaReference->availableRangeStart = mediaTimeFromOTIO(range->start_time());
-                    mediaReference->availableRangeDuration = mediaDurationFromOTIO(range->duration());
-                }
-                clip->mediaReferences[name] = mediaReference;
+                mediaReference->media = it->second;
+            }
+            else
+            {
+                mediaReference->media = std::make_shared<Media>();
+                mediaReference->media->path = ftk::Path(resolved);
+                mediaReference->media->mem = std::move(refMem);
+                seen[targetUrl] = mediaReference->media;
+            }
+        }
 
-                const std::string key = resolved->get();
-                const auto it = seen.find(key);
-                if (it != seen.end())
+        void Timeline::Private::readSeqRef(
+            const std::shared_ptr<Clip>& clip,
+            const std::string& name,
+            OTIO_NS::ImageSequenceReference* otioSeqRef)
+        {
+            auto mediaReference = std::make_shared<MediaReference>();
+            auto range = otioSeqRef->available_range();
+            if (range.has_value())
+            {
+                mediaReference->availableRangeStart = mediaTimeFromOTIO(range->start_time());
+                mediaReference->availableRangeDuration = mediaDurationFromOTIO(range->duration());
+            }
+            clip->mediaReferences[name] = mediaReference;
+
+            MediaTime startTime = mediaTime(clip->startTime, this->rate->get());
+            MediaDuration duration = mediaDuration(clip->duration, this->rate->get());
+            if (range.has_value())
+            {
+                MediaRate rate = mediaRateFromOTIO(range->duration().rate());
+                startTime = rescale(startTime, rate);
+                duration = rescale(duration, rate);
+            }
+            std::vector<ftk::MemFile> refMem;
+            if (!zipMem.empty())
+            {
+                for (Frame f = startTime.frames;
+                    f < startTime.frames + duration.frames;
+                    ++f)
                 {
-                    mediaReference->media = it->second;
+                    auto it = zipMem.find(otioSeqRef->target_url_for_image_number(f));
+                    if (it != zipMem.end())
+                    {
+                        refMem.push_back(it->second);
+                    }
                 }
-                else
-                {
-                    mediaReference->media = std::make_shared<Media>();
-                    mediaReference->media->path = *resolved;
-                    mediaReference->media->mem = std::move(refMem);
-                    seen[resolved->get()] = mediaReference->media;
-                }
+            }
+
+            const std::string targetURLBase = otioSeqRef->target_url_base();
+            std::string resolvedBase;
+            if (!refMem.empty())
+            {
+                resolvedBase = path.get() + "/" + targetURLBase;
+            }
+            else
+            {
+                resolvedBase = resolveRefURL(targetURLBase, timelineDir);
+            }
+            std::cout << "targetURLBase: " << targetURLBase << std::endl;
+            std::cout << "resolvedBase: " << resolvedBase << std::endl;
+            std::cout << "timelineDir: " << timelineDir << std::endl;
+            const std::string key = otioSeqRef->target_url_for_image_number(otioSeqRef->start_frame());
+            const auto it = seen.find(key);
+            if (it != seen.end())
+            {
+                mediaReference->media = it->second;
+            }
+            else
+            {
+                mediaReference->media = std::make_shared<Media>();
+                ftk::Path path(
+                    resolvedBase,
+                    otioSeqRef->name_prefix() +
+                    ftk::toString(otioSeqRef->start_frame(), otioSeqRef->frame_zero_padding()) +
+                    otioSeqRef->name_suffix());
+                path.setFrames(ftk::RangeI64(
+                    startTime.frames,
+                    startTime.frames + duration.frames - 1));
+                mediaReference->media->path = path;
+                mediaReference->media->mem = std::move(refMem);
+                seen[key] = mediaReference->media;
             }
         }
 

@@ -7,15 +7,10 @@ namespace tl
 {
     namespace timeline
     {
-        std::optional<ftk::Path> resolveExternalReference(
+        std::string resolveRefURL(
             const std::string& targetUrl,
             const std::filesystem::path& timelineDir)
         {
-            if (targetUrl.empty())
-            {
-                return std::nullopt;
-            }
-
             std::string s = targetUrl;
             constexpr const char* fileScheme = "file://";
             if (s.compare(0, 7, fileScheme) == 0)
@@ -34,7 +29,7 @@ namespace tl
             {
                 resolved = p;
             }
-            return ftk::Path(resolved.string());
+            return resolved.u8string();
         }
 
         std::optional<std::pair<std::shared_ptr<Clip>, core::Time>>

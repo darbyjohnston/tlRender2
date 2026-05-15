@@ -34,7 +34,6 @@ namespace tl
             p.frameActions.push_back(timeline::FrameAction::Prev);
             p.frameActions.push_back(timeline::FrameAction::Next);
             p.frameActions.push_back(timeline::FrameAction::End);
-
             const std::map<timeline::FrameAction, std::string> icons =
             {
                 { timeline::FrameAction::Next, "FrameNext" },

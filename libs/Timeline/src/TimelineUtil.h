@@ -18,14 +18,13 @@ namespace tl
         // paths, and the file:// URL scheme. URL-encoded characters are
         // not currently decoded; OTIO files in the wild rarely use them
         // for local references.
-        std::optional<ftk::Path> resolveExternalReference(
+        std::string resolveRefURL(
             const std::string& targetUrl,
             const std::filesystem::path& timelineDir);
 
         // Find the active clip at the given track-time. Returns the clip and the
         // clip-relative time. Returns null if no clip is active.
-        std::optional<std::pair<std::shared_ptr<Clip>, core::Time>>
-        findActiveClip(
+        std::optional<std::pair<std::shared_ptr<Clip>, core::Time>> findActiveClip(
             const std::shared_ptr<Track>&,
             const core::Time& trackTime);
 

@@ -5,11 +5,14 @@
 
 #include <tl/PlayerApp/App.h>
 #include <tl/PlayerApp/DocumentWidget.h>
+#include <tl/PlayerApp/StatusBar.h>
 
 #include <ftk/UI/Action.h>
+#include <ftk/UI/Divider.h>
 #include <ftk/UI/FileBrowser.h>
 #include <ftk/UI/Menu.h>
 #include <ftk/UI/MenuBar.h>
+#include <ftk/UI/RowLayout.h>
 
 namespace tl
 {
@@ -18,6 +21,10 @@ namespace tl
         struct MainWindow::Private
         {
             std::weak_ptr<App> app;
+            std::shared_ptr<DocumentWidget> documentWidget;
+            std::shared_ptr<StatusBar> statusBar;
+            std::shared_ptr<ftk::VerticalLayout> layout;
+            std::shared_ptr<ftk::VerticalLayout> widgetLayout;
         };
 
         void MainWindow::_init(
@@ -57,6 +64,17 @@ namespace tl
                 {
                     appWeak.lock()->exit();
                 }));
+
+            p.statusBar = StatusBar::create(context, app);
+
+            p.layout = ftk::VerticalLayout::create(context);
+            p.layout->setSpacingRole(ftk::SizeRole::None);
+            p.widgetLayout = ftk::VerticalLayout::create(context, p.layout);
+            p.widgetLayout->setVStretch(ftk::Stretch::Expanding);
+            p.widgetLayout->setSpacingRole(ftk::SizeRole::None);
+            ftk::Divider::create(context, ftk::Orientation::Vertical, p.layout);
+            p.statusBar->setParent(p.layout);
+            setWidget(p.layout);
         }
 
         MainWindow::MainWindow() :
@@ -78,7 +96,16 @@ namespace tl
         void MainWindow::setSession(const std::shared_ptr<render::Session>& session)
         {
             FTK_P();
-            setWidget(DocumentWidget::create(getContext(), p.app.lock(), session));
+            if (p.documentWidget)
+            {
+                p.documentWidget->setParent(nullptr);
+                p.documentWidget.reset();
+            }
+            p.documentWidget = DocumentWidget::create(
+                getContext(),
+                p.app.lock(),
+                session,
+                p.widgetLayout);
         }
     }
 }

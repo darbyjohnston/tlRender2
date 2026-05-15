@@ -58,17 +58,15 @@ namespace tl
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<Timeline>&);
 
+            //! Get the timeline.
+            const std::shared_ptr<Timeline>& getTimeline() const;
+
             //! \name Time
             ///@{
             
             const core::MediaRate& getRate() const;
             std::shared_ptr<ftk::IObservable<core::MediaRate> > observeRate() const;
-
-            const core::Time& getStartTime() const;
-            std::shared_ptr<ftk::IObservable<core::Time> > observeStartTime() const;
-
-            const core::Duration& getDuration() const;
-            std::shared_ptr<ftk::IObservable<core::Duration> > observeDuration() const;
+            void setRate(const core::MediaRate&);
             
             const core::Time& getTime() const;
             std::shared_ptr<ftk::IObservable<core::Time> > observeTime() const;

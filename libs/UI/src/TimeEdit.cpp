@@ -105,6 +105,20 @@ namespace tl
             return _p->timeUnitsModel;
         }
 
+        const core::MediaRate& TimeEdit::getRate() const
+        {
+            return _p->rate;
+        }
+
+        void TimeEdit::setRate(const core::MediaRate& value)
+        {
+            FTK_P();
+            if (value == p.rate)
+                return;
+            p.rate = value;
+            _textUpdate();
+        }
+
         const Time& TimeEdit::getValue() const
         {
             return _p->value;

@@ -3,24 +3,47 @@
 
 #include <tl/Core/Time.h>
 
+#include <ftk/Core/Error.h>
 #include <ftk/Core/Format.h>
+#include <ftk/Core/String.h>
 
+#include <array>
 #include <cmath>
 #include <ostream>
+#include <sstream>
 
 namespace tl
 {
     namespace core
     {
-        MediaRate mediaRate24()     { return { 24,    1    }; }
-        MediaRate mediaRate23_976() { return { 24000, 1001 }; }
-        MediaRate mediaRate25()     { return { 25,    1    }; }
-        MediaRate mediaRate30()     { return { 30,    1    }; }
-        MediaRate mediaRate29_97()  { return { 30000, 1001 }; }
-        MediaRate mediaRate48()     { return { 48,    1    }; }
-        MediaRate mediaRate50()     { return { 50,    1    }; }
-        MediaRate mediaRate60()     { return { 60,    1    }; }
-        MediaRate mediaRate59_94()  { return { 60000, 1001 }; }
+        TL_ENUM_IMPL(
+            CommonRate,
+            "24",
+            "23.976",
+            "25",
+            "30",
+            "29.97",
+            "48",
+            "50",
+            "60",
+            "59.94");
+
+        MediaRate getCommonRate(CommonRate value)
+        {
+            const std::array<MediaRate, static_cast<size_t>(CommonRate::Count)> data =
+            {
+                MediaRate(24),
+                MediaRate(24000, 1001),
+                MediaRate(25),
+                MediaRate(30),
+                MediaRate(30000, 1001),
+                MediaRate(48),
+                MediaRate(50),
+                MediaRate(60),
+                MediaRate(60000, 1001)
+            };
+            return data[static_cast<size_t>(value)];
+        }
 
         namespace
         {

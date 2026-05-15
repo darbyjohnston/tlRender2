@@ -20,7 +20,8 @@ namespace tl
             void _init(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<App>&,
-                const std::shared_ptr<render::Session>&);
+                const std::shared_ptr<render::Session>&,
+                const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
             DocumentWidget();
 
@@ -31,7 +32,8 @@ namespace tl
             static std::shared_ptr<DocumentWidget> create(
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<App>&,
-                const std::shared_ptr<render::Session>&);
+                const std::shared_ptr<render::Session>&,
+                const std::shared_ptr<ftk::IWidget>& parent = nullptr);
 
             ftk::Size2I getSizeHint() const override;
             void setGeometry(const ftk::Box2I&) override;

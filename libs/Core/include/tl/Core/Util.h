@@ -5,6 +5,8 @@
 
 #include <tl/Core/Export.h>
 
+#include <ftk/Core/Util.h>
+
 //! Convenience macro for enum utilities.
 //! 
 //! Required includes:

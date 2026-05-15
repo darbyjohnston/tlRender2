@@ -34,7 +34,6 @@ namespace tl
             p.playbackActions.push_back(timeline::Playback::Reverse);
             p.playbackActions.push_back(timeline::Playback::Stop);
             p.playbackActions.push_back(timeline::Playback::Forward);
-
             const std::map<timeline::Playback, std::string> icons =
             {
                 { timeline::Playback::Stop, "PlaybackStop" },

@@ -65,6 +65,20 @@ namespace tl
             return _p->timeUnitsModel;
         }
 
+        const core::MediaRate& TimeLabel::getRate() const
+        {
+            return _p->rate;
+        }
+
+        void TimeLabel::setRate(const core::MediaRate& value)
+        {
+            FTK_P();
+            if (value == p.rate)
+                return;
+            p.rate = value;
+            _textUpdate();
+        }
+
         const Time& TimeLabel::getValue() const
         {
             return _p->value;
@@ -87,6 +101,12 @@ namespace tl
         ftk::Size2I TimeLabel::getSizeHint() const
         {
             return _p->label->getSizeHint();
+        }
+
+        void TimeLabel::setGeometry(const ftk::Box2I& value)
+        {
+            IWidget::setGeometry(value);
+            _p->label->setGeometry(value);
         }
 
         void TimeLabel::_textUpdate()

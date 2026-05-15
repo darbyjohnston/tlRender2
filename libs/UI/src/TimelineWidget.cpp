@@ -49,20 +49,23 @@ namespace tl
                     _p->player->setTime(Time{ value });
                 });
     
+            auto timeline = player->getTimeline();
             p.startTimeObserver = ftk::Observer<Time>::create(
-                player->observeStartTime(),
+                timeline->observeStartTime(),
                 [this](const Time& value)
                 {
                     FTK_P();
-                    p.slider->setRange(value.frames, p.player->getDuration().frames);
+                    auto timeline = p.player->getTimeline();
+                    p.slider->setRange(value.frames, timeline->getDuration().frames);
                 });
 
             p.durationObserver = ftk::Observer<Duration>::create(
-                player->observeDuration(),
+                timeline->observeDuration(),
                 [this](const Duration& value)
                 {
                     FTK_P();
-                    p.slider->setRange(p.player->getStartTime().frames, value.frames);
+                    auto timeline = p.player->getTimeline();
+                    p.slider->setRange(timeline->getStartTime().frames, value.frames);
                 });
 
             p.timeObserver = ftk::Observer<Time>::create(

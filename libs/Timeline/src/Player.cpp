@@ -30,14 +30,8 @@ namespace tl
         {
             std::shared_ptr<Timeline> timeline;
             std::shared_ptr<ftk::Observable<MediaRate>> rate;
-            std::shared_ptr<ftk::Observable<Time>> startTime;
-            std::shared_ptr<ftk::Observable<Duration>> duration;
             std::shared_ptr<ftk::Observable<Time>> time;
             std::shared_ptr<ftk::Observable<Playback>> playback;
-
-            std::shared_ptr<ftk::Observer<MediaRate>> rateObserver;
-            std::shared_ptr<ftk::Observer<Time>> startTimeObserver;
-            std::shared_ptr<ftk::Observer<Duration>> durationObserver;
         };
 
         void Player::_init(
@@ -46,32 +40,9 @@ namespace tl
         {
             FTK_P();
             p.timeline = timeline;
-            p.rate = ftk::Observable<MediaRate>::create();
-            p.startTime = ftk::Observable<Time>::create();
-            p.duration = ftk::Observable<Duration>::create();
+            p.rate = ftk::Observable<MediaRate>::create(timeline->getRate());
             p.time = ftk::Observable<Time>::create();
             p.playback = ftk::Observable<Playback>::create();
-
-            p.rateObserver = ftk::Observer<MediaRate>::create(
-                timeline->observeRate(),
-                [this](const MediaRate& value)
-                {
-                    _p->rate->setIfChanged(value);
-                });
-
-            p.startTimeObserver = ftk::Observer<Time>::create(
-                timeline->observeStartTime(),
-                [this](const Time& value)
-                {
-                    _p->startTime->setIfChanged(value);
-                });
-
-            p.durationObserver = ftk::Observer<Duration>::create(
-                timeline->observeDuration(),
-                [this](const Duration& value)
-                {
-                    _p->duration->setIfChanged(value);
-                });
         }
 
         Player::Player() :
@@ -90,6 +61,11 @@ namespace tl
             return out;
         }
 
+        const std::shared_ptr<Timeline>& Player::getTimeline() const
+        {
+            return _p->timeline;
+        }
+
         const MediaRate& Player::getRate() const
         {
             return _p->timeline->getRate();
@@ -98,26 +74,6 @@ namespace tl
         std::shared_ptr<ftk::IObservable<MediaRate> > Player::observeRate() const
         {
             return _p->rate;
-        }
-
-        const Time& Player::getStartTime() const
-        {
-            return _p->startTime->get();
-        }
-
-        std::shared_ptr<ftk::IObservable<Time> > Player::observeStartTime() const
-        {
-            return _p->startTime;
-        }
-
-        const Duration& Player::getDuration() const
-        {
-            return _p->duration->get();
-        }
-
-        std::shared_ptr<ftk::IObservable<Duration> > Player::observeDuration() const
-        {
-            return _p->duration;
         }
         
         const Time& Player::getTime() const
@@ -182,10 +138,11 @@ namespace tl
                 setTime(getTime() - Duration{ 100 });
                 break;
             case timeline::FrameAction::Start:
-                setTime(p.startTime->get());
+                setTime(p.timeline->getStartTime());
                 break;
             case timeline::FrameAction::End:
-                setTime(p.startTime->get() + p.duration->get() - Duration{ 1 });
+                setTime(p.timeline->getStartTime() +
+                    p.timeline->getDuration() - Duration{ 1 });
                 break;
             default: break;
             }

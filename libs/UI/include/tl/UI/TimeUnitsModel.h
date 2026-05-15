@@ -64,7 +64,7 @@ namespace tl
             TimeUnits getTimeUnits() const;
 
             //! Observe the time units.
-            std::shared_ptr<ftk::IObservable<TimeUnits> > observeTimeUnits() const;
+            std::shared_ptr<ftk::IObservable<TimeUnits>> observeTimeUnits() const;
                 
             //! Set the time units.
             void setTimeUnits(TimeUnits);

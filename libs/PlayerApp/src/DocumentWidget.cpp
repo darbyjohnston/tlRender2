@@ -30,10 +30,13 @@ namespace tl
         void DocumentWidget::_init(
             const std::shared_ptr<ftk::Context>& context,
             const std::shared_ptr<App>& app,
-            const std::shared_ptr<render::Session>& session)
+            const std::shared_ptr<render::Session>& session,
+            const std::shared_ptr<ftk::IWidget>& parent)
         {
-            ftk::IWidget::_init(context, "tl::player_app::DocumentWidget", nullptr);
+            ftk::IWidget::_init(context, "tl::player_app::DocumentWidget", parent);
             FTK_P();
+
+            setVStretch(ftk::Stretch::Expanding);
 
             p.session = session;
 
@@ -71,10 +74,11 @@ namespace tl
         std::shared_ptr<DocumentWidget> DocumentWidget::create(
             const std::shared_ptr<ftk::Context>& context,
             const std::shared_ptr<App>& app,
-            const std::shared_ptr<render::Session>& session)
+            const std::shared_ptr<render::Session>& session,
+            const std::shared_ptr<ftk::IWidget>& parent)
         {
             auto out = std::shared_ptr<DocumentWidget>(new DocumentWidget);
-            out->_init(context, app, session);
+            out->_init(context, app, session, parent);
             return out;
         }
 

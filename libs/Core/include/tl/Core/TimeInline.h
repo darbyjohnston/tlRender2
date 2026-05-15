@@ -32,12 +32,22 @@ namespace tl
             return !(*this == other);
         }
 
+        constexpr MediaTime::MediaTime(Frame frames, const MediaRate& rate) :
+            frames(frames),
+            rate(rate)
+        {}
+
         constexpr double MediaTime::toSeconds() const
         {
             return rate.num != 0 ?
                 static_cast<double>(frames) * rate.den / rate.num :
                 0.0;
         }
+
+        constexpr MediaDuration::MediaDuration(Frame frames, const MediaRate& rate) :
+            frames(frames),
+            rate(rate)
+        {}
 
         constexpr double MediaDuration::toSeconds() const
         {
@@ -151,7 +161,12 @@ namespace tl
 
         constexpr MediaTime mediaTime(const Time& t, const MediaRate& rate)
         {
-            return { t.frames, rate };
+            return MediaTime(t.frames, rate);
+        }
+
+        constexpr MediaDuration mediaDuration(const Duration& t, const MediaRate& rate)
+        {
+            return MediaDuration(t.frames, rate);
         }
     }
 }

@@ -7,6 +7,7 @@
 
 #include <iosfwd>
 #include <string>
+#include <vector>
 
 namespace tl
 {
@@ -47,19 +48,32 @@ namespace tl
         };
 
         //! Common media rates.
-        TL_API MediaRate mediaRate24();
-        TL_API MediaRate mediaRate23_976();
-        TL_API MediaRate mediaRate25();
-        TL_API MediaRate mediaRate30();
-        TL_API MediaRate mediaRate29_97();
-        TL_API MediaRate mediaRate48();
-        TL_API MediaRate mediaRate50();
-        TL_API MediaRate mediaRate60();
-        TL_API MediaRate mediaRate59_94();
+        enum class TL_API_TYPE CommonRate
+        {
+            _24,
+            _23_976,
+            _25,
+            _30,
+            _29_97,
+            _48,
+            _50,
+            _60,
+            _59_94,
+
+            Count,
+            First = _24
+        };
+        TL_ENUM(CommonRate);
+
+        //! Get a common media rate.
+        TL_API MediaRate getCommonRate(CommonRate);
 
         //! Media time, in frames at a given rate.
         struct TL_API_TYPE MediaTime
         {
+            MediaTime() = default;
+            constexpr MediaTime(Frame, const MediaRate&);
+
             Frame     frames = 0;
             MediaRate rate;
 
@@ -70,6 +84,9 @@ namespace tl
         //! Media duration, in frames at a given rate.
         struct TL_API_TYPE MediaDuration
         {
+            MediaDuration() = default;
+            constexpr MediaDuration(Frame, const MediaRate&);
+
             Frame     frames = 0;
             MediaRate rate;
 
@@ -134,6 +151,11 @@ namespace tl
         //! Caller is responsible for ensuring this is meaningful (typically
         //! when the project rate equals the media rate).
         constexpr MediaTime mediaTime(const Time&, const MediaRate&);
+
+        //! Reinterpret a project durattion as a media duration at the given
+        //! rate. Caller is responsible for ensuring this is meaningful
+        //! (typically when the project rate equals the media rate).
+        constexpr MediaDuration mediaDuration(const Duration&, const MediaRate&);
 
         ///@}
 

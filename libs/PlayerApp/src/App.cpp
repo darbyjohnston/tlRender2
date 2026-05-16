@@ -144,6 +144,8 @@ namespace tl
             
             p.timeUnitsModel = ui::TimeUnitsModel::create(_context);
 
+            p.session = ftk::Observable<std::shared_ptr<render::Session>>::create();
+
             p.videoFrame = ftk::Observable<std::shared_ptr<ftk::Image>>::create();
 
             p.mainWindow = MainWindow::create(

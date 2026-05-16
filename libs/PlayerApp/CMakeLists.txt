@@ -6,6 +6,7 @@ target_sources(tlPlayerApp
         include/tl/PlayerApp/BottomToolBar.h
         include/tl/PlayerApp/DocumentWidget.h
         include/tl/PlayerApp/FileActions.h
+        include/tl/PlayerApp/FilesModel.h
         include/tl/PlayerApp/FrameActions.h
         include/tl/PlayerApp/MainWindow.h
         include/tl/PlayerApp/MenuBar.h
@@ -16,6 +17,7 @@ target_sources(tlPlayerApp
         src/BottomToolBar.cpp
         src/DocumentWidget.cpp
         src/FileActions.cpp
+        src/FilesModel.cpp
         src/FrameActions.cpp
         src/MainWindow.cpp
         src/MenuBar.cpp

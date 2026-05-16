@@ -121,7 +121,7 @@ namespace tl
             {
                 const size_t sampleCount = value->getSampleCount();
                 //std::cout << "sampleCount: " << sampleCount << std::endl;
-                const int swrOutputSamples = swr_get_out_samples(p.swrContext, sampleCount);
+                const int swrOutputSamples = swr_get_out_samples(p.swrContext, static_cast<int>(sampleCount));
                 //std::cout << "swrOutputSamples: " << swrOutputSamples << std::endl;
                 auto swrOutputBuffer = Audio::create(p.outputInfo, swrOutputSamples);
                 uint8_t* swrOutputBufferP[] = { swrOutputBuffer->getData() };
@@ -131,7 +131,7 @@ namespace tl
                     swrOutputBufferP,
                     swrOutputSamples,
                     swrInputBufferP,
-                    sampleCount);
+                    static_cast<int>(sampleCount));
                 //std::cout << "swrOutputCount: " << swrOutputCount << std::endl << std::endl;
                 out = Audio::create(p.outputInfo, swrOutputCount > 0 ? swrOutputCount : 0);
                 memcpy(out->getData(), swrOutputBuffer->getData(), out->getByteCount());

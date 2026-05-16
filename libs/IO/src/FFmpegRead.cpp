@@ -41,7 +41,7 @@ namespace tl
                 AVIOBufferData* bufferData = static_cast<AVIOBufferData*>(opaque);
 
                 const int64_t remaining = bufferData->size - bufferData->offset;
-                int bufSizeClamped = ftk::clamp(
+                int64_t bufSizeClamped = ftk::clamp(
                     static_cast<int64_t>(bufSize),
                     static_cast<int64_t>(0),
                     remaining);
@@ -53,7 +53,7 @@ namespace tl
                 memcpy(buf, bufferData->p + bufferData->offset, bufSizeClamped);
                 bufferData->offset += bufSizeClamped;
 
-                return bufSizeClamped;
+                return static_cast<int>(bufSizeClamped);
             }
 
             int64_t avIOBufferSeek(void* opaque, int64_t offset, int whence)

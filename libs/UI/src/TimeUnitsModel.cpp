@@ -9,6 +9,8 @@
 
 #include <opentime/rationalTime.h>
 
+#include <algorithm>
+#include <array>
 #include <cstdlib>
 
 namespace otio = opentime::OPENTIME_VERSION_NS;

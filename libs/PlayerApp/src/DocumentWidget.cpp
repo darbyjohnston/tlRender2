@@ -9,6 +9,7 @@
 #include <tl/UI/Viewport.h>
 #include <tl/UI/TimelineWidget.h>
 
+#include <ftk/UI/Divider.h>
 #include <ftk/UI/RowLayout.h>
 
 namespace tl
@@ -54,6 +55,7 @@ namespace tl
             p.layout->setSpacingRole(ftk::SizeRole::None);
             p.viewport->setParent(p.layout);
             p.timelineWidget->setParent(p.layout);
+            ftk::Divider::create(context, ftk::Orientation::Vertical, p.layout);
             p.bottomToolBar->setParent(p.layout);
 
             p.videoFrameObserver = ftk::Observer<std::shared_ptr<ftk::Image>>::create(

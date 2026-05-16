@@ -64,12 +64,31 @@ namespace tl
             p.timeUnitsWidget->setTooltip("Time units");
 
             p.layout = ftk::HorizontalLayout::create(context, shared_from_this());
+            p.layout->setMarginRole(ftk::SizeRole::MarginInside);
             p.playbackButtons->setParent(p.layout);
             p.frameButtons->setParent(p.layout);
             p.timeEdit->setParent(p.layout);
             p.durationLabel->setParent(p.layout);
             p.rateComboBox->setParent(p.layout);
             p.timeUnitsWidget->setParent(p.layout);
+
+            p.playbackButtons->setCallback(
+                [this](timeline::Playback value)
+                {
+                    _p->session->getPlayer()->setPlayback(value);
+                });
+
+            p.frameButtons->setCallback(
+                [this](timeline::FrameAction value)
+                {
+                    _p->session->getPlayer()->frameAction(value);
+                });
+
+            p.timeEdit->setCallback(
+                [this](const Time& value)
+                {
+                    _p->session->getPlayer()->setTime(value);
+                });
 
             p.rateComboBox->setIndexCallback(
                 [this](int value)

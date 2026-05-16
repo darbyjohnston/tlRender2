@@ -5,11 +5,12 @@
 
 #include <tl/PlayerApp/App.h>
 #include <tl/PlayerApp/DocumentWidget.h>
+#include <tl/PlayerApp/FileActions.h>
+#include <tl/PlayerApp/PlaybackActions.h>
 #include <tl/PlayerApp/StatusBar.h>
 
 #include <ftk/UI/Action.h>
 #include <ftk/UI/Divider.h>
-#include <ftk/UI/FileBrowser.h>
 #include <ftk/UI/Menu.h>
 #include <ftk/UI/MenuBar.h>
 #include <ftk/UI/RowLayout.h>
@@ -21,6 +22,8 @@ namespace tl
         struct MainWindow::Private
         {
             std::weak_ptr<App> app;
+            std::shared_ptr<FileActions> fileActions;
+            std::shared_ptr<PlaybackActions> playbackActions;
             std::shared_ptr<DocumentWidget> documentWidget;
             std::shared_ptr<StatusBar> statusBar;
             std::shared_ptr<ftk::VerticalLayout> layout;
@@ -36,34 +39,28 @@ namespace tl
 
             p.app = app;
 
+            p.fileActions = FileActions::create(context, app);
+            p.playbackActions = PlaybackActions::create(context, app);
+
             auto menuBar = getMenuBar();
-            auto fileMenu = menuBar->getMenu("File");
-            fileMenu->clear();
-            std::weak_ptr<App> appWeak(app);
-            std::weak_ptr<MainWindow> windowWeak(
-                std::dynamic_pointer_cast<MainWindow>(shared_from_this()));
-            fileMenu->addAction(ftk::Action::create(                
-                "Open",
-                "FileOpen",
-                ftk::KeyShortcut(ftk::Key::O, ftk::commandKeyModifier),
-                [this, appWeak, windowWeak]
-                {
-                    auto fileBrowserSystem = appWeak.lock()->getContext()->getSystem<ftk::FileBrowserSystem>();
-                    fileBrowserSystem->open(
-                        windowWeak.lock(),
-                        [appWeak](const ftk::Path& value)
-                        {
-                            appWeak.lock()->open(value);
-                        });
-                }));
+            menuBar->clear();
+            auto fileMenu = menuBar->addMenu("File");
+            auto actions = p.fileActions->getActions();
+            fileMenu->addAction(actions["Open"]);
+            fileMenu->addAction(actions["Close"]);
             fileMenu->addDivider();
-            fileMenu->addAction(ftk::Action::create(
-                "Quit",
-                ftk::KeyShortcut(ftk::Key::Q, ftk::commandKeyModifier),
-                [appWeak]
-                {
-                    appWeak.lock()->exit();
-                }));
+            fileMenu->addAction(actions["Exit"]);
+            auto playbackMenu = menuBar->addMenu("Playback");
+            actions = p.playbackActions->getActions();
+            playbackMenu->addAction(actions["Stop"]);
+            playbackMenu->addAction(actions["Forward"]);
+            playbackMenu->addAction(actions["Reverse"]);
+            playbackMenu->addAction(actions["TogglePlayback"]);
+            playbackMenu->addDivider();
+            playbackMenu->addAction(actions["Start"]);
+            playbackMenu->addAction(actions["Prev"]);
+            playbackMenu->addAction(actions["Next"]);
+            playbackMenu->addAction(actions["End"]);
 
             p.statusBar = StatusBar::create(context, app);
 

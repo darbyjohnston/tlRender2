@@ -61,12 +61,11 @@ namespace tl
                 p.buttons[action] = button;
             }
 
-            p.buttonGroup->setCheckedCallback(
-                [this](int index, bool value)
+            p.buttonGroup->setClickedCallback(
+                [this](int index)
                 {
                     FTK_P();
-                    if (value &&
-                        p.callback &&
+                    if (p.callback &&
                         index >= 0 &&
                         index < p.frameActions.size())
                     {

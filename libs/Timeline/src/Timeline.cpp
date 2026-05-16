@@ -209,7 +209,7 @@ namespace tl
             {
                 resolved = resolveRefURL(targetUrl, timelineDir);
             }
-            const auto it = seen.find(targetUrl);
+            const auto it = seen.find(resolved);
             if (it != seen.end())
             {
                 mediaReference->media = it->second;
@@ -219,7 +219,7 @@ namespace tl
                 mediaReference->media = std::make_shared<Media>();
                 mediaReference->media->path = ftk::Path(resolved);
                 mediaReference->media->mem = std::move(refMem);
-                seen[targetUrl] = mediaReference->media;
+                seen[resolved] = mediaReference->media;
             }
         }
 
@@ -270,10 +270,15 @@ namespace tl
             {
                 resolvedBase = resolveRefURL(targetURLBase, timelineDir);
             }
-            std::cout << "targetURLBase: " << targetURLBase << std::endl;
-            std::cout << "resolvedBase: " << resolvedBase << std::endl;
-            std::cout << "timelineDir: " << timelineDir << std::endl;
-            const std::string key = otioSeqRef->target_url_for_image_number(otioSeqRef->start_frame());
+            ftk::Path resolved( 
+                resolvedBase,
+                otioSeqRef->name_prefix() + '#' + otioSeqRef->name_suffix());
+            resolved.setFrames(ftk::RangeI64(
+                startTime.frames,
+                startTime.frames + duration.frames - 1));
+            const std::string key = ftk::Format("{0} {1}").
+                arg(resolved.get()).
+                arg(otioSeqRef->frame_zero_padding());
             const auto it = seen.find(key);
             if (it != seen.end())
             {
@@ -282,15 +287,7 @@ namespace tl
             else
             {
                 mediaReference->media = std::make_shared<Media>();
-                ftk::Path path(
-                    resolvedBase,
-                    otioSeqRef->name_prefix() +
-                    ftk::toString(otioSeqRef->start_frame(), otioSeqRef->frame_zero_padding()) +
-                    otioSeqRef->name_suffix());
-                path.setFrames(ftk::RangeI64(
-                    startTime.frames,
-                    startTime.frames + duration.frames - 1));
-                mediaReference->media->path = path;
+                mediaReference->media->path = resolved;
                 mediaReference->media->mem = std::move(refMem);
                 seen[key] = mediaReference->media;
             }

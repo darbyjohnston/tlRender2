@@ -4,6 +4,7 @@
 #pragma once
 
 #include <tl/UI/TimeUnitsModel.h>
+#include <tl/Render/Session.h>
 
 #include <ftk/UI/App.h>
 #include <ftk/Core/Path.h>
@@ -42,7 +43,19 @@ namespace tl
             const std::shared_ptr<ui::TimeUnitsModel>& getTimeUnitsModel() const;
             
             //! Open a file.
+            void open();
+            
+            //! Open a file.
             void open(const ftk::Path&);
+
+            //! Close the file.
+            void close();
+
+            //! Get the current session.
+            const std::shared_ptr<render::Session>& getSession() const;
+
+            //! Observe the current session.
+            std::shared_ptr<ftk::IObservable<std::shared_ptr<render::Session>>> observeSession() const;
 
             //! Observe the video frame.
             std::shared_ptr<ftk::IObservable<std::shared_ptr<ftk::Image>>> observeVideoFrame() const;

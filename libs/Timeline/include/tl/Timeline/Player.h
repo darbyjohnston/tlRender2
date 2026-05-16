@@ -80,6 +80,7 @@ namespace tl
             timeline::Playback getPlayback() const;
             std::shared_ptr<ftk::IObservable<timeline::Playback> > observePlayback() const;
             void setPlayback(timeline::Playback);
+            void togglePlayback();
 
             ///@}
 

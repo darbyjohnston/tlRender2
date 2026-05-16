@@ -89,7 +89,10 @@ namespace tl
         void Player::setTime(const Time& value)
         {
             FTK_P();
-            if (p.time->setIfChanged(value))
+            const auto& start = p.timeline->getStartTime();
+            const auto& duration = p.timeline->getDuration();
+            const Time tmp{ ftk::clamp(value.frames, start.frames, start.frames + duration.frames - 1) };
+            if (p.time->setIfChanged(tmp))
             {
             
             }
@@ -112,6 +115,10 @@ namespace tl
             {
             
             }
+        }
+
+        void Player::togglePlayback()
+        {
         }
 
         void Player::frameAction(timeline::FrameAction value)

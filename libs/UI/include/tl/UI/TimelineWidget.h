@@ -36,8 +36,23 @@ namespace tl
             
             ftk::Size2I getSizeHint() const override;
             void setGeometry(const ftk::Box2I&) override;
+            void styleEvent(const ftk::StyleEvent&) override;
+            void sizeHintEvent(const ftk::SizeHintEvent&) override;
+            void clipEvent(const ftk::Box2I&, bool) override;
+            void drawEvent(const ftk::Box2I&, const ftk::DrawEvent&) override;
+            void mouseEnterEvent(ftk::MouseEnterEvent&) override;
+            void mouseLeaveEvent() override;
+            void mouseMoveEvent(ftk::MouseMoveEvent&) override;
+            void mousePressEvent(ftk::MouseClickEvent&) override;
+            void mouseReleaseEvent(ftk::MouseClickEvent&) override;
+            void scrollEvent(ftk::ScrollEvent&) override;
+            void keyPressEvent(ftk::KeyEvent&) override;
+            void keyReleaseEvent(ftk::KeyEvent&) override;
 
-            private:
+        private:
+            int _timeToPos(const core::Time&) const;
+            core::Time _posToTime(int) const;
+
             FTK_PRIVATE();
         };
     }

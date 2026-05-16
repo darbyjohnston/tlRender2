@@ -7,6 +7,7 @@
 #include <tl/Render/Session.h>
 
 #include <ftk/UI/DialogSystem.h>
+#include <ftk/UI/FileBrowser.h>
 #include <ftk/Core/Context.h>
 #include <ftk/Core/Format.h>
 
@@ -20,7 +21,7 @@ namespace tl
         {
             CmdLine cmdLine;
             std::shared_ptr<ui::TimeUnitsModel> timeUnitsModel;
-            std::shared_ptr<render::Session> session;
+            std::shared_ptr<ftk::Observable<std::shared_ptr<render::Session>>> session;
             std::shared_ptr<ftk::Observable<std::shared_ptr<ftk::Image>>> videoFrame;
             std::future<std::shared_ptr<ftk::Image> > videoFrameRequest;
             std::shared_ptr<MainWindow> mainWindow;
@@ -70,22 +71,40 @@ namespace tl
             return _p->timeUnitsModel;
         }
 
+        void App::open()
+        {
+            FTK_P();
+            auto fileBrowserSystem = _context->getSystem<ftk::FileBrowserSystem>();
+            std::weak_ptr<App> appWeak(std::dynamic_pointer_cast<App>(shared_from_this()));
+            fileBrowserSystem->open(
+                p.mainWindow,
+                [appWeak](const ftk::Path& value)
+                {
+                    appWeak.lock()->open(value);
+                });
+        }
+
         void App::open(const ftk::Path& path)
         {
             FTK_P();
             try
             {
-                p.session = render::Session::create(_context, path);
+                auto session = render::Session::create(_context, path);
 
-                p.mainWindow->setSession(p.session);
+                p.mainWindow->setSession(session);
 
                 p.timeObserver = ftk::Observer<Time>::create(
-                    p.session->getPlayer()->observeTime(),
+                    session->getPlayer()->observeTime(),
                     [this](const Time& value)
                     {
                         FTK_P();
-                        p.videoFrameRequest = p.session->render(value);
+                        if (auto session = p.session->get())
+                        {
+                            p.videoFrameRequest = session->render(value);
+                        }
                     });
+                
+                p.session->setIfChanged(session);
             }
             catch (const std::exception& e)
             {
@@ -94,6 +113,24 @@ namespace tl
                     e.what(),
                     p.mainWindow);
             }
+        }
+
+        void App::close()
+        {
+            FTK_P();
+            p.session->setIfChanged(nullptr);
+            p.mainWindow->setSession(nullptr);
+            p.timeObserver.reset();
+        }
+
+        const std::shared_ptr<render::Session>& App::getSession() const
+        {
+            return _p->session->get();
+        }
+
+        std::shared_ptr<ftk::IObservable<std::shared_ptr<render::Session>>> App::observeSession() const
+        {
+            return _p->session;
         }
 
         std::shared_ptr<ftk::IObservable<std::shared_ptr<ftk::Image>>> App::observeVideoFrame() const

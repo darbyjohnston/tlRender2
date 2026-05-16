@@ -252,7 +252,8 @@ namespace tl
                     f < startTime.frames + duration.frames;
                     ++f)
                 {
-                    auto it = zipMem.find(otioSeqRef->target_url_for_image_number(f));
+                    auto it = zipMem.find(
+                        otioSeqRef->target_url_for_image_number(static_cast<int>(f)));
                     if (it != zipMem.end())
                     {
                         refMem.push_back(it->second);

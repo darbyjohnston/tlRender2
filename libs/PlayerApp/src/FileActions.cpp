@@ -12,6 +12,8 @@ namespace tl
         struct FileActions::Private
         {
             std::map<std::string, std::shared_ptr<ftk::Action> > actions;
+
+            std::shared_ptr<ftk::Observer<std::shared_ptr<render::Session>>> sessionObserver;
         };
 
         void FileActions::_init(
@@ -31,7 +33,7 @@ namespace tl
                         app->open();
                     }
                 });
-            p.actions["Open"]->setTooltip("Open a file.");
+            p.actions["Open"]->setTooltip("Open a file");
 
             p.actions["Close"] = ftk::Action::create(
                 "Close",
@@ -44,7 +46,7 @@ namespace tl
                         app->close();
                     }
                 });
-            p.actions["Close"]->setTooltip("Close the current file.");
+            p.actions["Close"]->setTooltip("Close the current file");
 
             p.actions["Exit"] = ftk::Action::create(
                 "Exit",
@@ -55,6 +57,14 @@ namespace tl
                     {
                         app->exit();
                     }
+                });
+
+            p.sessionObserver = ftk::Observer<std::shared_ptr<render::Session> >::create(
+                app->observeSession(),
+                [this](const std::shared_ptr<render::Session>& session)
+                {
+                    FTK_P();
+                    p.actions["Close"]->setEnabled(session.get());
                 });
         }
 

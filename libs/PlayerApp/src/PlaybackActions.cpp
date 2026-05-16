@@ -34,7 +34,7 @@ namespace tl
                         session->getPlayer()->setPlayback(timeline::Playback::Stop);
                     }
                 });
-            p.actions["Stop"]->setTooltip("Stop playback.");
+            p.actions["Stop"]->setTooltip("Stop playback");
 
             p.actions["Forward"] = ftk::Action::create(
                 "Forward",
@@ -47,7 +47,7 @@ namespace tl
                         session->getPlayer()->setPlayback(timeline::Playback::Forward);
                     }
                 });
-            p.actions["Forward"]->setTooltip("Start forward playback.");
+            p.actions["Forward"]->setTooltip("Start forward playback");
 
             p.actions["Reverse"] = ftk::Action::create(
                 "Reverse",
@@ -60,7 +60,7 @@ namespace tl
                         session->getPlayer()->setPlayback(timeline::Playback::Reverse);
                     }
                 });
-            p.actions["Reverse"]->setTooltip("Start reverse playback.");
+            p.actions["Reverse"]->setTooltip("Start reverse playback");
 
             p.actions["TogglePlayback"] = ftk::Action::create(
                 "Toggle Playback",
@@ -73,58 +73,6 @@ namespace tl
                     }
                 });
 
-            p.actions["Start"] = ftk::Action::create(
-                "Start Frame",
-                "FrameStart",
-                ftk::Key::Home,
-                [appWeak]
-                {
-                    if (auto session = appWeak.lock()->getSession())
-                    {
-                        session->getPlayer()->frameAction(timeline::FrameAction::Start);
-                    }
-                });
-            p.actions["Start"]->setTooltip("Go to the start frame.");
-
-            p.actions["Prev"] = ftk::Action::create(
-                "Previous Frame",
-                "FramePrev",
-                ftk::Key::Left,
-                [appWeak]
-                {
-                    if (auto session = appWeak.lock()->getSession())
-                    {
-                        session->getPlayer()->frameAction(timeline::FrameAction::Prev);
-                    }
-                });
-            p.actions["Prev"]->setTooltip("Go to the previous frame.");
-
-            p.actions["Next"] = ftk::Action::create(
-                "Next Frame",
-                "FrameNext",
-                ftk::Key::Right,
-                [appWeak]
-                {
-                    if (auto session = appWeak.lock()->getSession())
-                    {
-                        session->getPlayer()->frameAction(timeline::FrameAction::Next);
-                    }
-                });
-            p.actions["Next"]->setTooltip("Go to the next frame.");
-
-            p.actions["End"] = ftk::Action::create(
-                "End Frame",
-                "FrameEnd",
-                ftk::Key::End,
-                [appWeak]
-                {
-                    if (auto session = appWeak.lock()->getSession())
-                    {
-                        session->getPlayer()->frameAction(timeline::FrameAction::End);
-                    }
-                });
-            p.actions["End"]->setTooltip("Go to the end frame.");
-
             /*p.actions["SetInPoint"] = ftk::Action::create(
                 "Set In Point",
                 ftk::Key::I,
@@ -135,7 +83,7 @@ namespace tl
                         session->getPlayer()->setInPoint();
                     }
                 });
-            p.actions["SetInPoint"]->setTooltip("Set the playback in point.");
+            p.actions["SetInPoint"]->setTooltip("Set the playback in point");
 
             p.actions["ResetInPoint"] = ftk::Action::create(
                 "Reset In Point",
@@ -147,7 +95,7 @@ namespace tl
                         session->getPlayer()->resetInPoint();
                     }
                 });
-            p.actions["ResetInPoint"]->setTooltip("Reset the playback in point.");
+            p.actions["ResetInPoint"]->setTooltip("Reset the playback in point");
 
             p.actions["SetOutPoint"] = ftk::Action::create(
                 "Set Out Point",
@@ -159,7 +107,7 @@ namespace tl
                         session->getPlayer()->setOutPoint();
                     }
                 });
-            p.actions["SetOutPoint"]->setTooltip("Set the playback out point.");
+            p.actions["SetOutPoint"]->setTooltip("Set the playback out point");
 
             p.actions["ResetOutPoint"] = ftk::Action::create(
                 "Reset Out Point",
@@ -171,7 +119,7 @@ namespace tl
                         session->getPlayer()->resetOutPoint();
                     }
                 });
-            p.actions["ResetOutPoint"]->setTooltip("Reset the playback out point.");*/
+            p.actions["ResetOutPoint"]->setTooltip("Reset the playback out point");*/
 
             p.sessionObserver = ftk::Observer<std::shared_ptr<render::Session> >::create(
                 app->observeSession(),
@@ -203,10 +151,6 @@ namespace tl
                     p.actions["Forward"]->setEnabled(session.get());
                     p.actions["Reverse"]->setEnabled(session.get());
                     p.actions["TogglePlayback"]->setEnabled(session.get());
-                    p.actions["Start"]->setEnabled(session.get());
-                    p.actions["Prev"]->setEnabled(session.get());
-                    p.actions["Next"]->setEnabled(session.get());
-                    p.actions["End"]->setEnabled(session.get());
                     /*p.actions["SetInPoint"]->setEnabled(session.get());
                     p.actions["ResetInPoint"]->setEnabled(session.get());
                     p.actions["SetOutPoint"]->setEnabled(session.get());

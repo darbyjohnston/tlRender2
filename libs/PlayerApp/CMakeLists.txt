@@ -6,16 +6,22 @@ target_sources(tlPlayerApp
         include/tl/PlayerApp/BottomToolBar.h
         include/tl/PlayerApp/DocumentWidget.h
         include/tl/PlayerApp/FileActions.h
+        include/tl/PlayerApp/FrameActions.h
         include/tl/PlayerApp/MainWindow.h
+        include/tl/PlayerApp/MenuBar.h
         include/tl/PlayerApp/PlaybackActions.h
         include/tl/PlayerApp/StatusBar.h
+        include/tl/PlayerApp/WindowActions.h
         src/App.cpp
         src/BottomToolBar.cpp
         src/DocumentWidget.cpp
         src/FileActions.cpp
+        src/FrameActions.cpp
         src/MainWindow.cpp
+        src/MenuBar.cpp
         src/PlaybackActions.cpp
-        src/StatusBar.cpp)
+        src/StatusBar.cpp
+        src/WindowActions.cpp)
 
 target_include_directories(tlPlayerApp
     PUBLIC

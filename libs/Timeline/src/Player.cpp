@@ -3,6 +3,8 @@
 
 #include <tl/Timeline/Player.h>
 
+#include <ftk/Core/Timer.h>
+
 namespace tl
 {
     using namespace core;
@@ -32,6 +34,8 @@ namespace tl
             std::shared_ptr<ftk::Observable<MediaRate>> rate;
             std::shared_ptr<ftk::Observable<Time>> time;
             std::shared_ptr<ftk::Observable<Playback>> playback;
+            Playback playbackToggle = Playback::Forward;
+            std::shared_ptr<ftk::Timer> playbackTimer;
         };
 
         void Player::_init(
@@ -43,6 +47,8 @@ namespace tl
             p.rate = ftk::Observable<MediaRate>::create(timeline->getRate());
             p.time = ftk::Observable<Time>::create();
             p.playback = ftk::Observable<Playback>::create();
+            p.playbackTimer = ftk::Timer::create(context);
+            p.playbackTimer->setRepeating(true);
         }
 
         Player::Player() :
@@ -91,7 +97,15 @@ namespace tl
             FTK_P();
             const auto& start = p.timeline->getStartTime();
             const auto& duration = p.timeline->getDuration();
-            const Time tmp{ ftk::clamp(value.frames, start.frames, start.frames + duration.frames - 1) };
+            Time tmp = value;
+            if (tmp >= start + duration)
+            {
+                tmp = start;
+            }
+            else if (tmp < start)
+            {
+                tmp = start + duration - Duration{ 1 };
+            }
             if (p.time->setIfChanged(tmp))
             {
             
@@ -111,14 +125,41 @@ namespace tl
         void Player::setPlayback(timeline::Playback value)
         {
             FTK_P();
+            const Playback prev = p.playback->get();
             if (p.playback->setIfChanged(value))
             {
-            
+                p.playbackTimer->start(
+                    std::chrono::milliseconds(
+                        static_cast<size_t>(1000 / p.rate->get().toDouble())),
+                    [this]
+                    {
+                        FTK_P();
+                        const Time& start = p.timeline->getStartTime();
+                        const Duration& duration = p.timeline->getDuration();
+                        Time t = p.time->get();
+                        switch (p.playback->get())
+                        {
+                        case timeline::Playback::Forward: ++t.frames; break;
+                        case timeline::Playback::Reverse: --t.frames; break;
+                        default: break;
+                        }
+                        setTime(t);
+                    });
+
+                if (prev != Playback::Stop)
+                {
+                    p.playbackToggle = prev;
+                }
             }
         }
 
         void Player::togglePlayback()
         {
+            FTK_P();
+            setPlayback(
+                Playback::Stop == p.playback->get() ?
+                p.playbackToggle :
+                Playback::Stop);
         }
 
         void Player::frameAction(timeline::FrameAction value)

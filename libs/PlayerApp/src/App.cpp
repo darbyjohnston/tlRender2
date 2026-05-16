@@ -90,6 +90,7 @@ namespace tl
             try
             {
                 auto session = render::Session::create(_context, path);
+                p.session->setIfChanged(session);
 
                 p.mainWindow->setSession(session);
 
@@ -103,8 +104,6 @@ namespace tl
                             p.videoFrameRequest = session->render(value);
                         }
                     });
-                
-                p.session->setIfChanged(session);
             }
             catch (const std::exception& e)
             {

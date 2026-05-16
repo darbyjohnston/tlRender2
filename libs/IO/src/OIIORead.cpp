@@ -191,7 +191,6 @@ namespace tl
                 _path.getFrames().has_value() ?
                 _path.getFrame(time.frames, true) :
                 _path.getFileName(true);
-            std::cout << "file name 2: " << fileName << std::endl;
             std::unique_ptr<OIIO::Filesystem::IOMemReader> oiioMemReader;
             if (!_mem.empty())
             {

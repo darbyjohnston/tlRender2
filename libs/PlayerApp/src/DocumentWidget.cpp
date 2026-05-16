@@ -3,8 +3,6 @@
 
 #include <tl/PlayerApp/DocumentWidget.h>
 
-#include <tl/PlayerApp/BottomToolBar.h>
-
 #include <tl/PlayerApp/App.h>
 #include <tl/UI/Viewport.h>
 #include <tl/UI/TimelineWidget.h>
@@ -22,7 +20,6 @@ namespace tl
 
             std::shared_ptr<ui::Viewport> viewport;
             std::shared_ptr<ui::TimelineWidget> timelineWidget;
-            std::shared_ptr<BottomToolBar> bottomToolBar;
             std::shared_ptr<ftk::VerticalLayout> layout;
 
             std::shared_ptr<ftk::Observer<std::shared_ptr<ftk::Image>>> videoFrameObserver;
@@ -49,14 +46,10 @@ namespace tl
                 app->getTimeUnitsModel(),
                 session->getPlayer());
 
-            p.bottomToolBar = BottomToolBar::create(context, app, session);
-
             p.layout = ftk::VerticalLayout::create(context, shared_from_this());
             p.layout->setSpacingRole(ftk::SizeRole::None);
             p.viewport->setParent(p.layout);
             p.timelineWidget->setParent(p.layout);
-            ftk::Divider::create(context, ftk::Orientation::Vertical, p.layout);
-            p.bottomToolBar->setParent(p.layout);
 
             p.videoFrameObserver = ftk::Observer<std::shared_ptr<ftk::Image>>::create(
                 app->observeVideoFrame(),

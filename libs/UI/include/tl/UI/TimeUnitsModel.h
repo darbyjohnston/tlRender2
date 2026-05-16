@@ -9,6 +9,8 @@
 #include <ftk/Core/Context.h>
 #include <ftk/Core/Observable.h>
 
+#include <optional>
+
 namespace tl
 {
     namespace ui

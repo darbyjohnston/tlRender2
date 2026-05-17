@@ -4,6 +4,7 @@
 #include <tl/PlayerApp/FileActions.h>
 
 #include <tl/PlayerApp/App.h>
+#include <tl/PlayerApp/FilesModel.h>
 
 namespace tl
 {
@@ -60,7 +61,7 @@ namespace tl
                 });
 
             p.sessionObserver = ftk::Observer<std::shared_ptr<render::Session> >::create(
-                app->observeSession(),
+                app->getFilesModel()->observeCurrent(),
                 [this](const std::shared_ptr<render::Session>& session)
                 {
                     FTK_P();

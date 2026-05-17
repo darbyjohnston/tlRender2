@@ -3,6 +3,7 @@
 
 #include <tl/PlayerApp/App.h>
 
+#include <tl/PlayerApp/FilesModel.h>
 #include <tl/PlayerApp/MainWindow.h>
 #include <tl/Render/Session.h>
 
@@ -21,7 +22,7 @@ namespace tl
         {
             CmdLine cmdLine;
             std::shared_ptr<ui::TimeUnitsModel> timeUnitsModel;
-            std::shared_ptr<ftk::Observable<std::shared_ptr<render::Session>>> session;
+            std::shared_ptr<FilesModel> filesModel;
             std::shared_ptr<ftk::Observable<std::shared_ptr<ftk::Image>>> videoFrame;
             std::future<std::shared_ptr<ftk::Image> > videoFrameRequest;
             std::shared_ptr<MainWindow> mainWindow;
@@ -70,6 +71,11 @@ namespace tl
         {
             return _p->timeUnitsModel;
         }
+        
+        const std::shared_ptr<FilesModel>& App::getFilesModel() const
+        {
+            return _p->filesModel;
+        }
 
         void App::open()
         {
@@ -90,16 +96,14 @@ namespace tl
             try
             {
                 auto session = render::Session::create(_context, path);
-                p.session->setIfChanged(session);
-
-                p.mainWindow->setSession(session);
+                p.filesModel->addFile(session);
 
                 p.timeObserver = ftk::Observer<Time>::create(
                     session->getPlayer()->observeTime(),
                     [this](const Time& value)
                     {
                         FTK_P();
-                        if (auto session = p.session->get())
+                        if (auto session = p.filesModel->getCurrent())
                         {
                             p.videoFrameRequest = session->render(value);
                         }
@@ -117,19 +121,8 @@ namespace tl
         void App::close()
         {
             FTK_P();
-            p.session->setIfChanged(nullptr);
-            p.mainWindow->setSession(nullptr);
+            p.filesModel->removeFile(p.filesModel->getCurrentIndex());
             p.timeObserver.reset();
-        }
-
-        const std::shared_ptr<render::Session>& App::getSession() const
-        {
-            return _p->session->get();
-        }
-
-        std::shared_ptr<ftk::IObservable<std::shared_ptr<render::Session>>> App::observeSession() const
-        {
-            return _p->session;
         }
 
         std::shared_ptr<ftk::IObservable<std::shared_ptr<ftk::Image>>> App::observeVideoFrame() const
@@ -142,8 +135,8 @@ namespace tl
             FTK_P();
             
             p.timeUnitsModel = ui::TimeUnitsModel::create(_context);
-
-            p.session = ftk::Observable<std::shared_ptr<render::Session>>::create();
+            
+            p.filesModel = FilesModel::create(_context);
 
             p.videoFrame = ftk::Observable<std::shared_ptr<ftk::Image>>::create();
 

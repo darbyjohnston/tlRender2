@@ -41,11 +41,10 @@ namespace tl
             const ftk::Path path2(TL_TEST_DATA_DIR, "Overlay.otioz");
             auto session2 = render::Session::create(context, path2);
 
-            // Sample every 10th frame; parity should hold for all frames.
             auto timeline = session->getTimeline();
             for (core::Time t = timeline->getStartTime();
                 t < timeline->getStartTime() + timeline->getDuration();
-                t.frames = t.frames + 10)
+                ++t.frames)
             {
                 _print(ftk::Format("render frame: {0}").arg(core::to_string(t)));
                 auto image = session->render(t).get();

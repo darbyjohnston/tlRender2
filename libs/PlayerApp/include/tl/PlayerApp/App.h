@@ -14,6 +14,7 @@ namespace tl
     // tlplayer application
     namespace player_app
     {
+        class FilesModel;
         class MainWindow;
 
         //! Command line.
@@ -41,6 +42,9 @@ namespace tl
 
             //! Get the time units model.
             const std::shared_ptr<ui::TimeUnitsModel>& getTimeUnitsModel() const;
+
+            //! Get the time files model.
+            const std::shared_ptr<FilesModel>& getFilesModel() const;
             
             //! Open a file.
             void open();
@@ -50,12 +54,6 @@ namespace tl
 
             //! Close the file.
             void close();
-
-            //! Get the current session.
-            const std::shared_ptr<render::Session>& getSession() const;
-
-            //! Observe the current session.
-            std::shared_ptr<ftk::IObservable<std::shared_ptr<render::Session>>> observeSession() const;
 
             //! Observe the video frame.
             std::shared_ptr<ftk::IObservable<std::shared_ptr<ftk::Image>>> observeVideoFrame() const;

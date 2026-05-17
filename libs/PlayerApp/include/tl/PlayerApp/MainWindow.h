@@ -31,9 +31,6 @@ namespace tl
                 const std::shared_ptr<ftk::Context>&,
                 const std::shared_ptr<App>&);
 
-            //! Set the session.
-            void setSession(const std::shared_ptr<render::Session>&);
-
         private:
             FTK_PRIVATE();
         };

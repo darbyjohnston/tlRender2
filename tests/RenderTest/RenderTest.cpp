@@ -44,10 +44,9 @@ namespace tl
             auto timeline2 = timeline::Timeline::create(context, path2);
             auto renderer2 = render::VideoRenderer::create(context);
 
-            // Sample every 10th frame; parity should hold for all frames.
             for (core::Time t = timeline->getStartTime();
                 t < timeline->getStartTime() + timeline->getDuration();
-                t.frames = t.frames + 10)
+                ++t.frames)
             {
                 _print(ftk::Format("render frame: {0}").arg(core::to_string(t)));
                 auto graph = timeline->getVideo(t);

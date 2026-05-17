@@ -4,6 +4,7 @@
 #include <tl/PlayerApp/PlaybackActions.h>
 
 #include <tl/PlayerApp/App.h>
+#include <tl/PlayerApp/FilesModel.h>
 
 namespace tl
 {
@@ -11,6 +12,7 @@ namespace tl
     {
         struct PlaybackActions::Private
         {
+            std::shared_ptr<render::Session> session;
             std::map<std::string, std::shared_ptr<ftk::Action> > actions;
 
             std::shared_ptr<ftk::Observer<std::shared_ptr<render::Session>>> sessionObserver;
@@ -22,16 +24,16 @@ namespace tl
             const std::shared_ptr<App>& app)
         {
             FTK_P();
-            std::weak_ptr<App> appWeak(std::dynamic_pointer_cast<App>(app));
             p.actions["Stop"] = ftk::Action::create(
                 "Stop",
                 "PlaybackStop",
                 ftk::Key::K,
-                [appWeak]
+                [this]
                 {
-                    if (auto session = appWeak.lock()->getSession())
+                    FTK_P();
+                    if (p.session)
                     {
-                        session->getPlayer()->setPlayback(timeline::Playback::Stop);
+                        p.session->getPlayer()->setPlayback(timeline::Playback::Stop);
                     }
                 });
             p.actions["Stop"]->setTooltip("Stop playback");
@@ -40,11 +42,12 @@ namespace tl
                 "Forward",
                 "PlaybackForward",
                 ftk::Key::L,
-                [appWeak]
+                [this]
                 {
-                    if (auto session = appWeak.lock()->getSession())
+                    FTK_P();
+                    if (p.session)
                     {
-                        session->getPlayer()->setPlayback(timeline::Playback::Forward);
+                        p.session->getPlayer()->setPlayback(timeline::Playback::Forward);
                     }
                 });
             p.actions["Forward"]->setTooltip("Start forward playback");
@@ -53,11 +56,12 @@ namespace tl
                 "Reverse",
                 "PlaybackReverse",
                 ftk::Key::J,
-                [appWeak]
+                [this]
                 {
-                    if (auto session = appWeak.lock()->getSession())
+                    FTK_P();
+                    if (p.session)
                     {
-                        session->getPlayer()->setPlayback(timeline::Playback::Reverse);
+                        p.session->getPlayer()->setPlayback(timeline::Playback::Reverse);
                     }
                 });
             p.actions["Reverse"]->setTooltip("Start reverse playback");
@@ -65,11 +69,12 @@ namespace tl
             p.actions["TogglePlayback"] = ftk::Action::create(
                 "Toggle Playback",
                 ftk::Key::Space,
-                [appWeak]
+                [this]
                 {
-                    if (auto session = appWeak.lock()->getSession())
+                    FTK_P();
+                    if (p.session)
                     {
-                        session->getPlayer()->togglePlayback();
+                        p.session->getPlayer()->togglePlayback();
                     }
                 });
 
@@ -122,10 +127,11 @@ namespace tl
             p.actions["ResetOutPoint"]->setTooltip("Reset the playback out point");*/
 
             p.sessionObserver = ftk::Observer<std::shared_ptr<render::Session> >::create(
-                app->observeSession(),
+                app->getFilesModel()->observeCurrent(),
                 [this](const std::shared_ptr<render::Session>& session)
                 {
                     FTK_P();
+                    p.session = session;
                     if (session)
                     {
                         p.playbackObserver = ftk::Observer<timeline::Playback>::create(

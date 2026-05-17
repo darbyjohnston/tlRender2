@@ -4,6 +4,7 @@
 #include <tl/PlayerApp/BottomToolBar.h>
 
 #include <tl/PlayerApp/App.h>
+#include <tl/PlayerApp/FilesModel.h>
 #include <tl/PlayerApp/FrameActions.h>
 #include <tl/PlayerApp/PlaybackActions.h>
 #include <tl/UI/DurationLabel.h>
@@ -22,6 +23,8 @@ namespace tl
     {
         struct BottomToolBar::Private
         {
+            std::shared_ptr<render::Session> session;
+
             std::map<std::string, std::shared_ptr<ftk::ToolButton>> buttons;
             std::shared_ptr<ui::TimeEdit> timeEdit;
             std::shared_ptr<ui::DurationLabel> durationLabel;
@@ -32,7 +35,8 @@ namespace tl
             std::shared_ptr<ftk::Observer<std::shared_ptr<render::Session>>> sessionObserver;
             std::shared_ptr<ftk::Observer<MediaRate>> rateObserver;
             std::shared_ptr<ftk::Observer<Duration>> durationObserver;
-            std::shared_ptr<ftk::Observer<Time>> timeObserver;        };
+            std::shared_ptr<ftk::Observer<Time>> timeObserver;
+        };
 
         void BottomToolBar::_init(
             const std::shared_ptr<ftk::Context>& context,
@@ -81,31 +85,33 @@ namespace tl
             p.rateComboBox->setParent(p.layout);
             p.timeUnitsWidget->setParent(p.layout);
 
-            std::weak_ptr<App> appWeak(std::dynamic_pointer_cast<App>(app));
             p.timeEdit->setCallback(
-                [appWeak](const Time& value)
+                [this](const Time& value)
                 {
-                    if (auto session = appWeak.lock()->getSession())
+                    FTK_P();
+                    if (p.session)
                     {
-                        session->getPlayer()->setTime(value);
+                        p.session->getPlayer()->setTime(value);
                     }
                 });
 
             p.rateComboBox->setIndexCallback(
-                [appWeak](int value)
+                [this](int value)
                 {
-                    if (auto session = appWeak.lock()->getSession())
+                    FTK_P();
+                    if (p.session)
                     {
-                        session->getTimeline()->setRate(
+                        p.session->getTimeline()->setRate(
                             getCommonRate(static_cast<CommonRate>(value)));
                     }
                 });
 
             p.sessionObserver = ftk::Observer<std::shared_ptr<render::Session> >::create(
-                app->observeSession(),
+                app->getFilesModel()->observeCurrent(),
                 [this](const std::shared_ptr<render::Session>& session)
                 {
                     FTK_P();
+                    p.session = session;
                     if (session)
                     {
                         auto player = session->getPlayer();

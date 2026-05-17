@@ -4,6 +4,7 @@
 #include <tl/PlayerApp/FrameActions.h>
 
 #include <tl/PlayerApp/App.h>
+#include <tl/PlayerApp/FilesModel.h>
 
 namespace tl
 {
@@ -11,6 +12,7 @@ namespace tl
     {
         struct FrameActions::Private
         {
+            std::shared_ptr<render::Session> session;
             std::map<std::string, std::shared_ptr<ftk::Action> > actions;
 
             std::shared_ptr<ftk::Observer<std::shared_ptr<render::Session>>> sessionObserver;
@@ -21,16 +23,16 @@ namespace tl
             const std::shared_ptr<App>& app)
         {
             FTK_P();
-            std::weak_ptr<App> appWeak(std::dynamic_pointer_cast<App>(app));
             p.actions["Start"] = ftk::Action::create(
                 "Start",
                 "FrameStart",
                 ftk::Key::Up,
-                [appWeak]
+                [this]
                 {
-                    if (auto session = appWeak.lock()->getSession())
+                    FTK_P();
+                    if (p.session)
                     {
-                        session->getPlayer()->frameAction(timeline::FrameAction::Start);
+                        p.session->getPlayer()->frameAction(timeline::FrameAction::Start);
                     }
                 });
             p.actions["Start"]->setTooltip("Goto the start frame");
@@ -39,11 +41,12 @@ namespace tl
                 "End",
                 "FrameEnd",
                 ftk::Key::Down,
-                [appWeak]
+                [this]
                 {
-                    if (auto session = appWeak.lock()->getSession())
+                    FTK_P();
+                    if (p.session)
                     {
-                        session->getPlayer()->frameAction(timeline::FrameAction::End);
+                        p.session->getPlayer()->frameAction(timeline::FrameAction::End);
                     }
                 });
             p.actions["End"]->setTooltip("Goto the end frame");
@@ -52,11 +55,12 @@ namespace tl
                 "Prev",
                 "FramePrev",
                 ftk::Key::Left,
-                [appWeak]
+                [this]
                 {
-                    if (auto session = appWeak.lock()->getSession())
+                    FTK_P();
+                    if (p.session)
                     {
-                        session->getPlayer()->frameAction(timeline::FrameAction::Prev);
+                        p.session->getPlayer()->frameAction(timeline::FrameAction::Prev);
                     }
                 });
             p.actions["Prev"]->setTooltip("Goto the previous frame");
@@ -65,20 +69,22 @@ namespace tl
                 "Next",
                 "FrameNext",
                 ftk::Key::Right,
-                [appWeak]
+                [this]
                 {
-                    if (auto session = appWeak.lock()->getSession())
+                    FTK_P();
+                    if (p.session)
                     {
-                        session->getPlayer()->frameAction(timeline::FrameAction::Next);
+                        p.session->getPlayer()->frameAction(timeline::FrameAction::Next);
                     }
                 });
             p.actions["Next"]->setTooltip("Goto the next frame");
 
             p.sessionObserver = ftk::Observer<std::shared_ptr<render::Session> >::create(
-                app->observeSession(),
+                app->getFilesModel()->observeCurrent(),
                 [this](const std::shared_ptr<render::Session>& session)
                 {
                     FTK_P();
+                    p.session = session;
                     p.actions["Start"]->setEnabled(session.get());
                     p.actions["End"]->setEnabled(session.get());
                     p.actions["Prev"]->setEnabled(session.get());

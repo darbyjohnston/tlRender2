@@ -43,6 +43,24 @@ namespace tl
 
             //! Observe removed files.
             std::shared_ptr<ftk::IObservable<int>> observeFileRemove() const;
+            
+            //! Get the current file.
+            std::shared_ptr<render::Session> getCurrent() const;
+
+            //! Observe the current file.
+            std::shared_ptr<ftk::IObservable<std::shared_ptr<render::Session>>> observeCurrent() const;
+            
+            //! Set the current file.
+            void setCurrent(const std::shared_ptr<render::Session>&);
+
+            //! Get the current file.
+            int getCurrentIndex() const;
+
+            //! Observe the current file.
+            std::shared_ptr<ftk::IObservable<int>> observeCurrentIndex() const;
+            
+            //! Set the current file.
+            void setCurrentIndex(int);
 
         private:
             FTK_PRIVATE();

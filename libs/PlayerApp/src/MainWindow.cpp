@@ -7,6 +7,7 @@
 #include <tl/PlayerApp/BottomToolBar.h>
 #include <tl/PlayerApp/DocumentWidget.h>
 #include <tl/PlayerApp/FileActions.h>
+#include <tl/PlayerApp/FilesModel.h>
 #include <tl/PlayerApp/FrameActions.h>
 #include <tl/PlayerApp/MenuBar.h>
 #include <tl/PlayerApp/PlaybackActions.h>
@@ -35,6 +36,8 @@ namespace tl
             std::shared_ptr<StatusBar> statusBar;
             std::shared_ptr<ftk::VerticalLayout> layout;
             std::shared_ptr<ftk::VerticalLayout> widgetLayout;
+
+            std::shared_ptr<ftk::Observer<std::shared_ptr<render::Session>>> sessionObserver;
         };
 
         void MainWindow::_init(
@@ -80,6 +83,26 @@ namespace tl
             ftk::Divider::create(context, ftk::Orientation::Vertical, p.layout);
             p.statusBar->setParent(p.layout);
             setWidget(p.layout);
+
+            p.sessionObserver = ftk::Observer<std::shared_ptr<render::Session> >::create(
+                app->getFilesModel()->observeCurrent(),
+                [this](const std::shared_ptr<render::Session>& session)
+                {
+                    FTK_P();
+                    if (p.documentWidget)
+                    {
+                        p.documentWidget->setParent(nullptr);
+                        p.documentWidget.reset();
+                    }
+                    if (session)
+                    {
+                        p.documentWidget = DocumentWidget::create(
+                            getContext(),
+                            p.app.lock(),
+                            session,
+                            p.widgetLayout);
+                    }
+                });
         }
 
         MainWindow::MainWindow() :
@@ -96,24 +119,6 @@ namespace tl
             auto out = std::shared_ptr<MainWindow>(new MainWindow);
             out->_init(context, app);
             return out;
-        }
-
-        void MainWindow::setSession(const std::shared_ptr<render::Session>& session)
-        {
-            FTK_P();
-            if (p.documentWidget)
-            {
-                p.documentWidget->setParent(nullptr);
-                p.documentWidget.reset();
-            }
-            if (session)
-            {
-                p.documentWidget = DocumentWidget::create(
-                    getContext(),
-                    p.app.lock(),
-                    session,
-                    p.widgetLayout);
-            }
         }
     }
 }

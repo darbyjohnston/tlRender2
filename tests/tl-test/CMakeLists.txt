@@ -1,6 +1,7 @@
 add_executable(tl-test tl-test.cpp)
 
 target_link_libraries(tl-test PRIVATE
+    tlPlayerAppTest
     tlRenderTest
     tlTimelineTest
     tlIOTest
